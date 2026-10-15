@@ -63,21 +63,6 @@ WorkshopHub works completely offline with built-in regex parsers. To enable AI v
 
 ---
 
-## 🌐 Deploy to GitHub Pages (Free, in 30 Seconds)
-
-1. Push this repository to your GitHub account:
-   ```bash
-   git remote add origin https://github.com/Codinggeniusnks/<your-repo-name>.git
-   git branch -M main
-   git push -u origin main
-   ```
-2. In your GitHub repository, go to **Settings** → **Pages**.
-3. Under **Build and deployment** → **Branch**, select `main` and `/ (root)`.
-4. Click **Save**. Your tracker is now live at:
-   `https://Codinggeniusnks.github.io/<your-repo-name>/`
-
----
-
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE) - free to use, modify, and distribute.
