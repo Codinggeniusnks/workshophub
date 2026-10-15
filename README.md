@@ -1,83 +1,83 @@
-# WorkshopHub 📅🚀
-> **A privacy-first, zero-leak dashboard to allocate, organize, and track every programme, workshop, and webinar you register for.**
+# WorkshopHub 📅🤖
+> **An intelligent, privacy-first personal dashboard to allocate, organize, and track every programme, workshop, and webinar you register for.**
 
-Have you ever registered for multiple tech workshops, webinars, or university programmes via **Google Forms**, only to forget:
+Have you ever registered for multiple workshops or tech webinars via **Google Forms**, only to forget:
 - *What date and time was it scheduled for?*
-- *Is it on Google Meet, Zoom, MS Teams, or an in-person physical hall?*
+- *Is it on Google Meet, Zoom, MS Teams, or a physical campus hall?*
 - *What was the workshop actually about?*
-- *Where are the preparation notes or prerequisite links?*
+- *Do you have overlapping sessions or missing preparation materials?*
 
-**WorkshopHub** solves this by giving you a clean, unified dashboard with automated countdowns, 1-click calendar sync, and smart Google Form confirmation parsing.
+**WorkshopHub** automatically organizes your schedule with **AI Multimodal Ingestion (text + flyer screenshots)**, **Schedule Clash Detection**, and **1-Click Calendar Syncing**, available as an **installable Mobile PWA (iOS & Android)**, a **Desktop App**, or hosted on **GitHub Pages**.
 
 ---
 
 ## ✨ Features
 
-- **🎯 Complete Workshop Allocation**: Record Title, Organizer, Date, Time, Format (Virtual vs In-Person), Venue / Meeting Link, Passcode, Description ("What is it about?"), Preparation Checklist, and Registration reference.
-- **⚡ Smart Ingest (Google Form / Email Parser)**: Simply paste the text from your Google Form confirmation response or email receipt — WorkshopHub automatically extracts dates, meeting URLs, and details locally.
-- **📅 1-Click Calendar Sync (Zero API Keys)**:
-  - Direct **"Add to Google Calendar"** dynamic link generation.
-  - One-click **`.ics` download** compatible with Apple Calendar, Outlook, and mobile devices.
-- **⏰ Live Countdowns & Spotlight Banner**:
-  - Highlights the very next upcoming workshop with real-time countdown badges (*"Today at 2:00 PM"*, *"In 2 days"*, *"⚡ In Progress Now"*).
-- **🔒 Zero-Leak & Privacy by Design**:
-  - **No backend database, no external telemetry, and NO API keys required.**
+### 🤖 Intelligent AI & Smart Organization
+- **Multimodal AI Ingest (Gemini 2.0 Flash)**:
+  - **Option A: Paste text** from Google Form receipts or confirmation emails.
+  - **Option B: Upload an image / poster screenshot** — Gemini vision reads dates, times, speaker, and links straight from the flyer!
+  - **Offline Heuristic Fallback**: Built-in deterministic regex parser works even without an internet connection or without an API key.
+- **💬 "Ask Your Schedule" AI Assistant**: Chat with your workshops (*"What sessions do I have this weekend?"*, *"Do I have any clashes?"*, *"Give me a prep checklist"*).
+- **⚠️ Schedule Clash & Conflict Detection**: Automatically highlights overlapping workshops on the same day.
+- **🔍 Smart Agenda Timeline**: Grouped into *Today*, *Tomorrow*, *This Week*, *Later*, and *Past* with live countdown badges (`⚡ Live Now!`, `🚨 Today at 2:00 PM`, `In 2 days`).
+
+### 📱 Mobile-First & PWA
+- **Installable on Android & iOS**: Add to Home Screen in 1 tap directly from your browser.
+- **Works 100% Offline**: Service worker caches all assets locally.
+- **Android Web Share Target**: Share confirmation emails or WhatsApp messages directly to WorkshopHub to auto-extract details!
+
+### 📅 Zero-API Calendar Sync
+- **1-Click "Add to Google Calendar"**: Direct dynamic URL generator pre-filling title, time, venue, and description without Google OAuth credentials.
+- **Download `.ics`**: Generates RFC-compliant calendar files with timezone tags compatible with Apple Calendar and Microsoft Outlook.
+
+### 🔒 Privacy-by-Design & Zero-Leak Security
+- **No Backend, No External Telemetry, Zero Stored Secrets**:
   - All data is stored in the browser's `localStorage`.
   - Your personal schedule is completely private to your device.
-- **👥 Multi-User Ready**:
-  - Includes an **"Insert Programme"** modal so anyone who clones or visits your deployment can use it immediately for their own schedule.
-  - **Sample Demo Mode Switch**: Easily switch between realistic demo workshops and your personal workspace (great for screenshots and showing off the project on GitHub without exposing personal information).
-- **💾 Full Data Portability**:
-  - Backup & restore your events via **JSON export/import**.
-  - Export to **CSV** for Google Sheets or Microsoft Excel.
+  - Optional Gemini API keys are stored in `localStorage` only, passed via secure HTTPS headers, and **strictly excluded from JSON/CSV exports**.
+- **Multi-User Ready**: When published to GitHub Pages, every visitor gets their own private workspace with an "Insert Programme" form. Includes a 1-click **Demo Mode** toggle for portfolio showcase.
 
 ---
 
-## 🚀 How to Run & Quick Start
+## 🚀 Quick Start
 
-### Option 1: Run as a Desktop App (Fastest & Most User-Friendly!)
-Simply double-click **`WorkshopHub.exe`** in the project folder!
-- Launches as a standalone native desktop app (no URL address bar, no tabs, clean desktop window).
-- Ultra-lightweight (only 8 KB).
-- Stores all your data in an isolated, private local profile.
+### 1. Web Browser & Mobile Phone (PWA)
+1. Open `index.html` in your browser, or visit your deployed GitHub Pages URL.
+2. On mobile (Chrome/Safari), tap **Install** or **Share → Add to Home Screen**.
 
-### Option 2: Open in Any Web Browser
-Double-click or open `index.html` in your favorite browser (Chrome, Edge, Firefox, Safari).
+### 2. Desktop App (Windows)
+Double-click `WorkshopHub.exe` (or compile with `powershell -File desktop/build.ps1`):
+- Runs in a clean, standalone native desktop window (no browser address bars or tabs).
+- Uses a fixed local port (`47821`) so your `localStorage` data persists permanently.
+- Single-instance protection prevents duplicate background processes.
 
-### Option 3: Deploy to GitHub Pages (Free, in 30 Seconds)
-1. Fork or push this repository to your GitHub account:
+---
+
+## 🔑 How to Get a Free Gemini API Key (Optional)
+
+WorkshopHub works completely offline with built-in regex parsers. To enable AI vision and chatbot features:
+1. Visit **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**.
+2. Sign in with your Google Account and click **Create API key**.
+3. In WorkshopHub, tap **⚙️ Settings**, paste your key, and click **Save**.
+
+---
+
+## 🌐 Deploy to GitHub Pages (Free, in 30 Seconds)
+
+1. Push this repository to your GitHub account:
    ```bash
-   git init
-   git add .
-   git commit -m "Initial commit of WorkshopHub"
-   git remote add origin https://github.com/<your-username>/workshophub.git
+   git remote add origin https://github.com/Codinggeniusnks/<your-repo-name>.git
    git branch -M main
    git push -u origin main
    ```
-2. On GitHub, go to your repository **Settings** → **Pages**.
-3. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
-4. Choose the `main` branch and `/ (root)` folder, then click **Save**.
-5. Your dashboard is now live at `https://<your-username>.github.io/workshophub/`!
-
----
-
-## 🛠️ Built With
-
-- **HTML5 & Vanilla ES6+**: Lightweight, blazing fast, zero build steps.
-- **Tailwind CSS**: Modern, clean, and responsive UI.
-- **Browser LocalStorage**: Offline-capable, private client-side persistence.
-- **iCalendar (.ics) Engine**: Standard-compliant calendar generation.
-
----
-
-## 🛡️ Security & Privacy Assurance
-
-- **No Personal Information Committed**: This repository only contains mock demo data for illustration.
-- **Zero API Keys**: No Google Cloud Console, OAuth credentials, or third-party API tokens are required.
-- **Isolated Storage**: When other users visit your published GitHub Pages site, their browser stores only their data. They cannot view your schedule, and you cannot view theirs.
+2. In your GitHub repository, go to **Settings** → **Pages**.
+3. Under **Build and deployment** → **Branch**, select `main` and `/ (root)`.
+4. Click **Save**. Your tracker is now live at:
+   `https://Codinggeniusnks.github.io/<your-repo-name>/`
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) - free to use, fork, and customize.
+This project is licensed under the [MIT License](LICENSE) - free to use, modify, and distribute.

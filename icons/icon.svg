@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad)" filter="url(#shadow)"/>
+  <!-- Calendar Icon Background -->
+  <rect x="100" y="120" width="312" height="290" rx="40" fill="#ffffff"/>
+  <!-- Calendar Header Band -->
+  <path d="M 100 160 C 100 138 118 120 140 120 L 372 120 C 394 120 412 138 412 160 L 412 200 L 100 200 Z" fill="#6366f1"/>
+  <!-- Binder Rings -->
+  <rect x="160" y="90" width="28" height="56" rx="14" fill="#312e81"/>
+  <rect x="324" y="90" width="28" height="56" rx="14" fill="#312e81"/>
+  <!-- Lightning bolt / check in calendar -->
+  <path d="M 270 240 L 210 320 L 255 320 L 240 380 L 310 295 L 265 295 Z" fill="#4f46e5"/>
+</svg>

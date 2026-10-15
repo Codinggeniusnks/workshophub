@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
@@ -10,49 +9,50 @@ namespace WorkshopHub
 {
     static class Program
     {
+        private const int FIXED_PORT = 47821; // Fixed origin prevents localStorage wipes across launches
         private static HttpListener listener;
         private static string baseDir;
         private static bool isRunning = true;
+        private static Mutex singleInstanceMutex;
 
         [STAThread]
         static void Main(string[] args)
         {
+            // 1. Single-instance check
+            bool isNewInstance;
+            singleInstanceMutex = new Mutex(true, "WorkshopHub_SingleInstance_Mutex_47821", out isNewInstance);
+            if (!isNewInstance)
+            {
+                // Already running: open the browser window and exit
+                LaunchBrowserWindow(string.Format("http://127.0.0.1:{0}/", FIXED_PORT));
+                return;
+            }
+
             baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1. Find a free available TCP port
-            int port = GetAvailablePort();
-
-            // 2. Start internal lightweight HTTP server
-            string url = "http://127.0.0.1:" + port + "/";
+            // 2. Start internal HTTP server on fixed port
+            string url = string.Format("http://127.0.0.1:{0}/", FIXED_PORT);
             listener = new HttpListener();
             listener.Prefixes.Add(url);
+
             try
             {
                 listener.Start();
             }
             catch (Exception ex)
             {
-                // Fallback to direct file launch if port binding fails
+                // If port is occupied by another process, fallback to file protocol
                 LaunchFallback();
                 return;
             }
 
-            // 3. Start async request handler thread
+            // 3. Start request processing thread
             Thread serverThread = new Thread(ListenLoop);
             serverThread.IsBackground = true;
             serverThread.Start();
 
-            // 4. Launch Desktop Window (Edge in App Mode)
-            LaunchAppWindow(port, url);
-        }
-
-        private static int GetAvailablePort()
-        {
-            TcpListener l = new TcpListener(IPAddress.Loopback, 0);
-            l.Start();
-            int port = ((IPEndPoint)l.LocalEndpoint).Port;
-            l.Stop();
-            return port;
+            // 4. Launch Desktop Window
+            LaunchAppWindow(FIXED_PORT, url);
         }
 
         private static void ListenLoop()
@@ -81,11 +81,9 @@ namespace WorkshopHub
                     rawUrl = "index.html";
                 }
 
-                // Prevent path traversal
-                rawUrl = rawUrl.Replace("..", "").Replace("/", "\\");
-                string filePath = Path.Combine(baseDir, rawUrl);
-
-                if (!File.Exists(filePath))
+                // Path traversal protection
+                string filePath = Path.GetFullPath(Path.Combine(baseDir, rawUrl.Replace('/', '\\')));
+                if (!filePath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase) || !File.Exists(filePath))
                 {
                     context.Response.StatusCode = 404;
                     byte[] notFound = Encoding.UTF8.GetBytes("File Not Found: " + rawUrl);
@@ -102,6 +100,7 @@ namespace WorkshopHub
                     case ".js": contentType = "application/javascript; charset=utf-8"; break;
                     case ".css": contentType = "text/css; charset=utf-8"; break;
                     case ".json": contentType = "application/json; charset=utf-8"; break;
+                    case ".webmanifest": contentType = "application/manifest+json; charset=utf-8"; break;
                     case ".png": contentType = "image/png"; break;
                     case ".jpg": case ".jpeg": contentType = "image/jpeg"; break;
                     case ".svg": contentType = "image/svg+xml"; break;
@@ -136,9 +135,7 @@ namespace WorkshopHub
             {
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = edgePath;
-                // --app makes Edge open in a native app window without URL bars, tabs, or bookmarks
-                // --user-data-dir gives it an isolated, private persistent profile
-                psi.Arguments = string.Format("--app=\"{0}\" --user-data-dir=\"{1}\" --window-size=1280,840 --app-id=workshophub_app", url, profileDir);
+                psi.Arguments = string.Format("--app=\"{0}\" --user-data-dir=\"{1}\" --window-size=1280,840 --app-id=workshophub_desktop_app", url, profileDir);
                 psi.UseShellExecute = false;
 
                 try
@@ -155,7 +152,16 @@ namespace WorkshopHub
                 catch { }
             }
 
-            // Fallback: Open in default browser
+            LaunchBrowserWindow(url);
+            // Keep server running
+            while (isRunning)
+            {
+                Thread.Sleep(2000);
+            }
+        }
+
+        private static void LaunchBrowserWindow(string url)
+        {
             try
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
@@ -164,9 +170,6 @@ namespace WorkshopHub
             {
                 LaunchFallback();
             }
-
-            // Keep server alive for 12 hours or until terminated
-            Thread.Sleep(12 * 60 * 60 * 1000);
         }
 
         private static void LaunchFallback()

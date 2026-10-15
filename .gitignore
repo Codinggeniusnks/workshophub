@@ -1,9 +1,14 @@
+# Binary executables (distribute via GitHub Releases instead of repo history)
+*.exe
+WorkshopHub.exe
+desktop_backup/
+
 # Operating System files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Environment and sensitive keys (strictly prohibited from repo)
+# Environment and sensitive keys
 .env
 .env.*
 *.local
@@ -15,9 +20,10 @@ personal_data.json
 my_events.json
 *.backup.json
 
-# Node & package manager directories (if ever initialized)
+# Node & package manager directories
 node_modules/
 package-lock.json
 dist/
+release/
 .vscode/
 .idea/

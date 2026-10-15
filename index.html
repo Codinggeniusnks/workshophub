@@ -2,12 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>WorkshopHub // Programme & Event Tracker</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
@@ -24,143 +34,122 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col pb-20 md:pb-6 selection:bg-indigo-500 selection:text-white">
 
-  <!-- Top Navigation & Action Bar -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <!-- PWA Install Banner -->
+  <div id="pwa-install-banner" class="hidden bg-indigo-900 text-white px-4 py-2.5 text-xs flex items-center justify-between border-b border-indigo-800 sticky top-0 z-40">
+    <div class="flex items-center gap-2">
+      <span>📱</span>
+      <span><strong>Install WorkshopHub App</strong> for instant offline mobile access.</span>
+    </div>
+    <button id="pwa-install-btn" class="px-3 py-1 bg-white text-indigo-900 font-bold rounded-lg shadow-sm">
+      Install
+    </button>
+  </div>
+
+  <!-- Desktop & Tablet Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
       
-      <!-- Brand & Mode Indicator -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-200">
-          W
-        </div>
+      <!-- Logo & Mode -->
+      <div class="flex items-center gap-2.5">
+        <img src="icons/icon.svg" alt="WorkshopHub Logo" class="w-9 h-9 rounded-xl shadow-xs">
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-black tracking-tight text-slate-900">WorkshopHub</h1>
+            <h1 class="text-base font-black tracking-tight text-slate-900 dark:text-white">WorkshopHub</h1>
             <span id="mode-indicator-badge"></span>
           </div>
-          <p class="text-xs text-slate-500 font-medium">Personal Programme, Workshop & Webinar Allocator</p>
+          <p class="text-[11px] text-slate-400 font-medium hidden sm:block">Intelligent Programme & Workshop Allocator</p>
         </div>
       </div>
+
+      <!-- Navigation Tabs (Desktop / Tablet) -->
+      <nav class="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300">
+        <button data-nav-tab="agenda" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white shadow-xs">
+          📅 Agenda
+        </button>
+        <button data-nav-tab="cards" class="px-3 py-1.5 rounded-lg transition hover:bg-white dark:hover:bg-slate-700">
+          ⊞ Cards
+        </button>
+        <button data-nav-tab="calendar" class="px-3 py-1.5 rounded-lg transition hover:bg-white dark:hover:bg-slate-700">
+          🗓️ Month View
+        </button>
+        <button data-nav-tab="ai" class="px-3 py-1.5 rounded-lg transition hover:bg-white dark:hover:bg-slate-700 flex items-center gap-1">
+          <span>🤖</span> Ask AI
+        </button>
+      </nav>
 
       <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Demo / Personal Toggle -->
-        <button id="demo-mode-toggle" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition"></button>
+      <div class="flex items-center gap-2">
+        <button id="header-demo-toggle-btn" class="hidden sm:inline-flex px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition"></button>
 
-        <!-- Smart Ingest Button -->
-        <button id="open-smart-parse-btn" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="Paste Google Form confirmation or email">
-          <span>📋</span> Smart Paste
+        <button data-action="open-smart-parse" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
+          <span>📋</span> <span class="hidden sm:inline">Smart Ingest</span>
         </button>
 
-        <!-- Insert Event Primary Button -->
-        <button id="open-add-modal-btn" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 transition">
-          <span>+</span> Insert Programme
+        <button data-action="open-add-modal" class="px-3.5 py-1.5 text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-1">
+          <span>+</span> <span>Insert</span>
         </button>
 
-        <!-- Backup & Tools Dropdown -->
-        <div class="relative group">
-          <button class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
-            <span>⚙️ Data</span>
-            <span class="text-[10px]">▼</span>
-          </button>
-          <div class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 hidden group-hover:block z-50">
-            <button id="export-json-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
-              <span>Backup (JSON)</span>
-              <span>💾</span>
-            </button>
-            <button id="export-csv-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
-              <span>Export to Excel (CSV)</span>
-              <span>📊</span>
-            </button>
-            <button id="import-json-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
-              <span>Restore from Backup</span>
-              <span>📥</span>
-            </button>
-            <input type="file" id="json-file-input" accept=".json" class="hidden">
-            <div class="my-1 border-t border-slate-100"></div>
-            <button id="clear-data-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-red-50 text-red-600 flex items-center justify-between font-semibold">
-              <span>Wipe Personal Data</span>
-              <span>🗑️</span>
-            </button>
-          </div>
-        </div>
-
+        <button data-action="open-settings" class="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-xl transition" title="Settings">
+          ⚙️
+        </button>
       </div>
+
     </div>
   </header>
 
   <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
 
-    <!-- KPI Metric Cards -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Total Registered</div>
-        <div id="stat-total" class="text-2xl font-black text-slate-900">0</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Programmes in tracker</div>
+    <!-- KPI Summary Row -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Registered</div>
+        <div id="stat-total" class="text-xl font-black text-slate-900 dark:text-white mt-0.5">0</div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Upcoming</div>
-        <div id="stat-upcoming" class="text-2xl font-black text-indigo-600">0</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Scheduled ahead</div>
+      <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Scheduled Ahead</div>
+        <div id="stat-upcoming" class="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">0</div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Happening This Week</div>
-        <div id="stat-this-week" class="text-2xl font-black text-amber-600">0</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Requires immediate prep</div>
+      <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">This Week</div>
+        <div id="stat-this-week" class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">0</div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Online / In-Person</div>
-        <div id="stat-online-inperson" class="text-2xl font-black text-emerald-600">0 / 0</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Virtual vs Physical</div>
+      <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Virtual / Physical</div>
+        <div id="stat-ratio" class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">0 / 0</div>
       </div>
     </section>
 
-    <!-- Next Upcoming Workshop Spotlight -->
+    <!-- Next Workshop Spotlight Hero Banner -->
     <section id="spotlight-banner" class="hidden"></section>
 
-    <!-- Search, Filters & View Options -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        
-        <!-- Live Search -->
+    <!-- Search & Filter Controls -->
+    <section class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
+      <div class="flex flex-col sm:flex-row gap-2.5">
         <div class="relative flex-1">
-          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
             🔍
           </span>
           <input 
             type="text" 
             id="search-input" 
-            placeholder="Search by title, speaker, venue, or keyword..." 
-            class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+            placeholder="Search by title, speaker, venue, or topics..." 
+            class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
         </div>
 
-        <!-- Filter Dropdowns -->
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Format / Mode Filter -->
-          <select id="filter-mode" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="all">🌐 All Formats (Online & Physical)</option>
-            <option value="online">Virtual / Online Only</option>
+        <div class="flex items-center gap-2">
+          <select id="filter-mode" class="px-2.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <option value="all">🌐 All Formats</option>
+            <option value="online">Online Virtual Only</option>
             <option value="in-person">In-Person Only</option>
           </select>
 
-          <!-- Status Filter -->
-          <select id="filter-status" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="all">⏳ All Statuses</option>
-            <option value="upcoming">Upcoming Only</option>
-            <option value="past">Past / Concluded Only</option>
-            <option value="registered">Registered</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="attended">Attended</option>
-          </select>
-
-          <!-- Category Filter -->
-          <select id="filter-category" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select id="filter-category" class="px-2.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300">
             <option value="all">🏷️ All Categories</option>
             <option value="AI & Data">AI & Data</option>
             <option value="Web & Software">Web & Software</option>
@@ -170,60 +159,69 @@
             <option value="Academic & Research">Academic & Research</option>
             <option value="Other">Other</option>
           </select>
-
-          <!-- View Switcher -->
-          <div class="flex items-center bg-slate-100 p-1 rounded-xl">
-            <button id="view-cards-btn" class="px-2.5 py-1 text-xs font-bold rounded-lg transition bg-white shadow-xs text-indigo-700" title="Cards View">
-              ⊞ Cards
-            </button>
-            <button id="view-table-btn" class="px-2.5 py-1 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900" title="Table View">
-              ☰ Table
-            </button>
-          </div>
-
         </div>
-
       </div>
     </section>
 
-    <!-- Events List / Grid Area -->
-    <section id="events-container"></section>
+    <!-- Dynamic Main Tab Content Area (Agenda / Cards / Calendar / AI) -->
+    <section id="main-tab-content"></section>
 
   </main>
 
-  <!-- Footer -->
-  <footer class="mt-12 py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-400">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>WorkshopHub • Privacy-by-design & Zero-leak architecture. All data saved locally on your device.</p>
-      <p class="font-medium text-slate-500">Ready for GitHub Pages • Open Source</p>
-    </div>
-  </footer>
+  <!-- Mobile Bottom Navigation Bar (Visible on phones & small screens) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex items-center justify-around text-[10px] font-bold text-slate-500">
+    <button data-nav-tab="agenda" class="flex flex-col items-center gap-1 text-indigo-600">
+      <span class="text-base">📅</span>
+      <span>Agenda</span>
+    </button>
+    <button data-nav-tab="cards" class="flex flex-col items-center gap-1">
+      <span class="text-base">⊞</span>
+      <span>Cards</span>
+    </button>
+    
+    <!-- Center Action Button -->
+    <button data-action="open-add-modal" class="-mt-5 w-12 h-12 rounded-full bg-indigo-600 text-white shadow-lg flex items-center justify-center text-2xl font-black">
+      +
+    </button>
+
+    <button data-nav-tab="calendar" class="flex flex-col items-center gap-1">
+      <span class="text-base">🗓️</span>
+      <span>Month</span>
+    </button>
+    <button data-nav-tab="ai" class="flex flex-col items-center gap-1">
+      <span class="text-base">🤖</span>
+      <span>Ask AI</span>
+    </button>
+  </nav>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-20 md:bottom-5 right-4 z-50 space-y-2 max-w-sm w-full pointer-events-auto"></div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: Insert / Edit Programme Details                   -->
+  <!-- MODAL: Insert / Edit Programme                           -->
   <!-- ======================================================== -->
   <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 my-8">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div>
-          <h2 id="modal-title" class="text-lg font-bold text-slate-900">Insert New Programme / Workshop</h2>
-          <p class="text-xs text-slate-500">Record all your registration details so you never miss a session.</p>
+          <h2 id="modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Insert New Programme / Workshop</h2>
+          <p class="text-xs text-slate-400">Allocate details so you never forget where or when it is held.</p>
         </div>
-        <button id="close-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button id="close-event-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
 
-      <form id="event-form" class="mt-4 space-y-4">
+      <form id="event-form" class="mt-4 space-y-3.5 text-xs">
         <input type="hidden" id="form-id">
 
-        <!-- Title & Category -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="md:col-span-2">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Programme / Workshop Name *</label>
-            <input type="text" id="form-title" required placeholder="e.g. Modern Full-Stack Development Masterclass" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
-          </div>
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Programme / Workshop Name *</label>
+          <input type="text" id="form-title" required placeholder="e.g. Modern Full-Stack Development Masterclass" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
-            <select id="form-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Category</label>
+            <select id="form-category" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <option value="AI & Data">AI & Data</option>
               <option value="Web & Software">Web & Software</option>
               <option value="Career & Professional">Career & Professional</option>
@@ -233,82 +231,73 @@
               <option value="Other">Other</option>
             </select>
           </div>
-        </div>
-
-        <!-- Organizer & Format / Mode -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Organizer / Host / Speaker</label>
-            <input type="text" id="form-organizer" placeholder="e.g. Google Cloud Community, University CS Club" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Host / Speaker</label>
+            <input type="text" id="form-organizer" placeholder="e.g. GDG, Tech Society" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Format / Mode *</label>
-            <select id="form-mode" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-              <option value="online">🌐 Virtual / Online (Zoom, Meet, Teams)</option>
-              <option value="in-person">📍 In-Person (Campus, Office, Auditorium)</option>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Format / Mode *</label>
+            <select id="form-mode" required class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="online">🌐 Online (Meet/Zoom/Teams)</option>
+              <option value="in-person">📍 In-Person (Physical Hall)</option>
             </select>
           </div>
         </div>
 
-        <!-- Date & Times -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
-            <input type="date" id="form-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Date *</label>
+            <input type="date" id="form-date" required class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time</label>
-            <input type="time" id="form-start-time" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
+            <input type="time" id="form-start-time" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">End Time</label>
-            <input type="time" id="form-end-time" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">End Time</label>
+            <input type="time" id="form-end-time" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
         </div>
 
-        <!-- Venue / Meeting Location Details -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="md:col-span-1">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Venue / Platform</label>
-            <input type="text" id="form-venue" placeholder="e.g. Google Meet, Hall 3, Cyberjaya" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Venue / Platform</label>
+            <input type="text" id="form-venue" placeholder="e.g. Google Meet, Hall 3B" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
-          <div class="md:col-span-1">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Meeting Link / Map URL</label>
-            <input type="url" id="form-meeting-link" placeholder="https://meet.google.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Meeting Link</label>
+            <input type="url" id="form-meeting-link" placeholder="https://meet.google.com/..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
-          <div class="md:col-span-1">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Passcode / PIN (if any)</label>
-            <input type="text" id="form-passcode" placeholder="e.g. 123456" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Passcode / PIN</label>
+            <input type="text" id="form-passcode" placeholder="e.g. 123456" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
         </div>
 
-        <!-- Description: What is it about? -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">What is it about? (Topic Summary / Objectives)</label>
-          <textarea id="form-description" rows="2" placeholder="Briefly summarize what this workshop covers so you remember why you registered..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"></textarea>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">What is it about? (Topic Summary)</label>
+          <textarea id="form-description" rows="2" placeholder="Brief summary of why you registered and what will be taught..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
         </div>
 
-        <!-- Google Form link & Materials link -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Google Form / Registration Link</label>
-            <input type="url" id="form-form-link" placeholder="https://forms.gle/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Google Form / Ticket Link</label>
+            <input type="url" id="form-form-link" placeholder="https://forms.gle/..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Slides / Materials / Repo Link</label>
-            <input type="url" id="form-materials-link" placeholder="https://drive.google.com/... or GitHub link" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Slides / Materials Link</label>
+            <input type="url" id="form-materials-link" placeholder="https://github.com/... or Google Drive" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
         </div>
 
-        <!-- Notes & Status -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="md:col-span-2">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Preparation Checklist / Personal Notes</label>
-            <input type="text" id="form-notes" placeholder="e.g. Install Node.js v20, bring student ID, prepare questions" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Preparation Checklist & Notes</label>
+            <input type="text" id="form-notes" placeholder="e.g. Install Python 3.11, prepare questions" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
-            <select id="form-status" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+            <select id="form-status" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <option value="registered">Registered</option>
               <option value="confirmed">Confirmed</option>
               <option value="attended">Attended</option>
@@ -317,12 +306,11 @@
           </div>
         </div>
 
-        <!-- Modal Footer Actions -->
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-          <button type="button" id="cancel-modal-btn" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+          <button type="button" id="cancel-event-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
+          <button type="submit" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
             Save Programme
           </button>
         </div>
@@ -331,45 +319,143 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: Smart Paste (Google Form / Confirmation Parser)   -->
+  <!-- MODAL: Smart Ingest (Text + Screenshot OCR)              -->
   <!-- ======================================================== -->
-  <div id="smart-parse-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+  <div id="smart-parse-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Smart Paste Confirmation</h2>
-          <p class="text-xs text-slate-500">Paste your Google Form email or registration response to auto-fill details.</p>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋 Smart Ingest</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-extrabold uppercase">AI Powered</span>
+          </h2>
+          <p class="text-xs text-slate-400">Paste an email receipt, or upload a flyer / screenshot to extract details automatically.</p>
         </div>
-        <button id="close-parse-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button id="close-smart-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
 
-      <div class="mt-4 space-y-4">
+      <div class="mt-4 space-y-3.5 text-xs">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Paste Raw Text or Confirmation Email</label>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Option A: Paste Confirmation Email / Google Form Receipt</label>
           <textarea 
-            id="smart-parse-input" 
-            rows="7" 
-            placeholder="Example:&#10;Thank you for registering for 'Next.js & Supabase Masterclass'!&#10;Date: 2026-10-25&#10;Time: 14:00 - 16:30&#10;Join Google Meet: https://meet.google.com/abc-defg-hij&#10;Organized by GDG..." 
-            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+            id="smart-parse-text-input" 
+            rows="5" 
+            placeholder="Thank you for registering!&#10;Workshop: AI Agents Masterclass&#10;Date: 2026-10-25&#10;Time: 14:00 - 16:30&#10;Meeting Link: https://meet.google.com/abc-defg-hij..." 
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-[11px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           ></textarea>
         </div>
-        
-        <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-900">
-          💡 <strong>Zero-Leak Guarantee:</strong> Text is analyzed 100% locally in your browser. Nothing is sent to any server or external API.
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Option B: Upload Poster / Flyer / Screenshot (Multimodal Vision)</label>
+          <input 
+            type="file" 
+            id="smart-parse-image-input" 
+            accept="image/*" 
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+          >
+          <div id="smart-image-preview-container" class="mt-2 hidden">
+            <img id="smart-image-preview" alt="Preview" class="max-h-36 rounded-xl border border-slate-200 object-contain mx-auto">
+          </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <button type="button" onclick="closeSmartParseModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+        <div class="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-900/30 text-indigo-950 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 leading-relaxed">
+          🔒 <strong>Privacy Assurance:</strong> Works offline via built-in heuristics, or directly with your own Gemini API key. No data is stored on any server.
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+          <button type="button" id="cancel-smart-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
-          <button type="button" id="execute-parse-btn" class="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
-            ⚡ Extract & Fill Form
+          <button type="button" id="smart-parse-submit-btn" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+            ⚡ Extract & Populate Form
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- ======================================================== -->
+  <!-- MODAL: Settings (Gemini Key, Backup, Privacy)            -->
+  <!-- ======================================================== -->
+  <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white">Settings & AI Configuration</h2>
+          <p class="text-xs text-slate-400">Configure your free AI key and manage local backups.</p>
+        </div>
+        <button id="close-settings-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <form id="settings-form" class="mt-4 space-y-4 text-xs">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-700 dark:text-slate-300">Free Gemini API Key (Bring Your Own Key)</label>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold hover:underline">
+              Get Free Key ↗
+            </a>
+          </div>
+          <input 
+            type="password" 
+            id="settings-api-key" 
+            placeholder="AIzaSy..." 
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          >
+          <p class="text-[11px] text-slate-400 mt-1">
+            Stored 100% locally in your browser. Strictly excluded from JSON exports and never published to GitHub.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">AI Model</label>
+            <select id="settings-model" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fastest, Multimodal)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Timezone</label>
+            <input type="text" id="settings-timezone" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2">
+          <label class="block font-bold text-slate-700 dark:text-slate-300">Data Management & Portability</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="settings-export-json-btn" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold flex items-center justify-center gap-1.5">
+              <span>💾</span> <span>Backup JSON</span>
+            </button>
+            <button type="button" id="settings-export-csv-btn" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold flex items-center justify-center gap-1.5">
+              <span>📊</span> <span>Export CSV</span>
+            </button>
+            <button type="button" id="settings-import-json-btn" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold flex items-center justify-center gap-1.5">
+              <span>📥</span> <span>Restore Backup</span>
+            </button>
+            <button type="button" id="settings-clear-data-btn" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold flex items-center justify-center gap-1.5">
+              <span>🗑️</span> <span>Wipe Data</span>
+            </button>
+          </div>
+          <input type="file" id="settings-import-file-input" accept=".json" class="hidden">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+          <button type="submit" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts: Classic scripts for 100% offline & file:// compatibility -->
+  <script src="js/safe.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/organiser.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
