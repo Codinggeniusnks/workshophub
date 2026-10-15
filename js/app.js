@@ -4,8 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize UI
+  // 1. Initialize Storage & UI
   UI.init();
+  if (typeof DriveSync !== 'undefined') {
+    DriveSync.init();
+  }
 
   // 2. Register Service Worker for PWA & offline support
   if ('serviceWorker' in navigator) {
@@ -78,6 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     UI.closeEventModal();
     UI.refresh();
+
+    if (typeof DriveSync !== 'undefined' && DriveSync.isSignedIn()) {
+      DriveSync.sync().catch(err => console.warn('Auto-sync failed:', err));
+    }
   });
 
   // 6. Smart Ingest Submission (Text or Screenshot Image OCR)
@@ -161,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = document.getElementById('settings-api-key').value.trim();
     const model = document.getElementById('settings-model').value;
     const tz = document.getElementById('settings-timezone').value;
+    const gdriveClientId = document.getElementById('settings-gdrive-client-id')?.value.trim();
 
     Store.saveSettings({
       geminiApiKey: apiKey,
@@ -168,9 +176,43 @@ document.addEventListener('DOMContentLoaded', () => {
       userTimezone: tz
     });
 
+    if (typeof DriveSync !== 'undefined') {
+      DriveSync.setClientId(gdriveClientId);
+      DriveSync.initGis();
+    }
+
     UI.showToast('Settings saved successfully!');
     UI.closeSettingsModal();
     UI.refresh();
+  });
+
+  // Google Drive Personal Sync Controls
+  document.getElementById('settings-drive-connect-btn')?.addEventListener('click', () => {
+    const inputId = document.getElementById('settings-gdrive-client-id')?.value.trim();
+    if (inputId && typeof DriveSync !== 'undefined') {
+      DriveSync.setClientId(inputId);
+      DriveSync.initGis();
+    }
+    if (typeof DriveSync !== 'undefined') {
+      DriveSync.requestSignIn();
+    }
+  });
+
+  document.getElementById('settings-drive-sync-btn')?.addEventListener('click', async () => {
+    if (typeof DriveSync === 'undefined' || !DriveSync.isSignedIn()) {
+      alert('Please sign in to Google Drive first using your OAuth Client ID.');
+      return;
+    }
+    await DriveSync.sync();
+    UI.showToast('Google Drive synced successfully!');
+  });
+
+  document.getElementById('settings-drive-disconnect-btn')?.addEventListener('click', () => {
+    if (confirm('Disconnect from Google Drive? Your local events will remain intact.')) {
+      if (typeof DriveSync !== 'undefined') {
+        DriveSync.signOut();
+      }
+    }
   });
 
   // Export JSON (Safe, no leaks)
@@ -236,6 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
         UI.showToast(`Imported ${res.count} events!`);
         UI.closeSettingsModal();
         UI.refresh();
+        if (typeof DriveSync !== 'undefined' && DriveSync.isSignedIn()) {
+          DriveSync.sync().catch(err => console.warn('Auto-sync failed:', err));
+        }
       } else {
         alert('Import failed: ' + res.error);
       }

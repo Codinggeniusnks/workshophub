@@ -23,6 +23,9 @@ const UI = {
     this.renderMetrics();
     this.renderSpotlight();
     this.renderActiveTab();
+    if (typeof DriveSync !== 'undefined' && DriveSync.updateSyncStatusUI) {
+      DriveSync.updateSyncStatusUI(DriveSync.isSignedIn() ? 'synced' : 'disconnected', localStorage.getItem('workshophub_last_sync_time') || '');
+    }
   },
 
   // 2. Metrics Bar
@@ -515,6 +518,14 @@ const UI = {
           const date = target.getAttribute('data-date');
           this.renderCalendarDayEvents(date);
           break;
+        case 'drive-signin':
+          if (typeof DriveSync !== 'undefined') DriveSync.requestSignIn();
+          break;
+        case 'drive-sync-now':
+          if (typeof DriveSync !== 'undefined') {
+            DriveSync.sync().then(() => UI.showToast('Google Drive synced!'));
+          }
+          break;
       }
     });
 
@@ -614,6 +625,23 @@ const UI = {
     document.getElementById('settings-api-key').value = Store.getSetting('geminiApiKey') || '';
     document.getElementById('settings-model').value = Store.getSetting('aiModel') || 'gemini-2.0-flash';
     document.getElementById('settings-timezone').value = Store.getSetting('userTimezone') || 'UTC';
+
+    // Google Drive Sync fields
+    if (typeof DriveSync !== 'undefined') {
+      const gdriveInput = document.getElementById('settings-gdrive-client-id');
+      if (gdriveInput) gdriveInput.value = DriveSync.getClientId();
+
+      const connectBtn = document.getElementById('settings-drive-connect-btn');
+      const disconnectBtn = document.getElementById('settings-drive-disconnect-btn');
+      if (DriveSync.isSignedIn()) {
+        if (connectBtn) connectBtn.textContent = `Connected (${DriveSync.userProfile?.email || 'Active'})`;
+        if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+      } else {
+        if (connectBtn) connectBtn.textContent = 'Sign In with Google';
+        if (disconnectBtn) disconnectBtn.classList.add('hidden');
+      }
+    }
+
     modal.classList.remove('hidden');
   },
 
@@ -654,9 +682,16 @@ const UI = {
     Store.deleteEvent(id);
     this.refresh();
 
+    if (typeof DriveSync !== 'undefined' && DriveSync.isSignedIn()) {
+      DriveSync.sync().catch(err => console.warn('Auto-sync failed:', err));
+    }
+
     this.showToast(`Deleted: "${Safe.truncate(eventToDelete.title, 25)}"`, () => {
       Store.addEvent(eventToDelete);
       this.refresh();
+      if (typeof DriveSync !== 'undefined' && DriveSync.isSignedIn()) {
+        DriveSync.sync().catch(err => console.warn('Auto-sync failed:', err));
+      }
     });
   },
 

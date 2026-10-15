@@ -8,6 +8,7 @@ const Safe = require('../js/safe.js');
 const Parser = require('../js/parser.js');
 const Organiser = require('../js/organiser.js');
 const Calendar = require('../js/calendar.js');
+const DriveSync = require('../js/driveSync.js');
 
 let passed = 0;
 let failed = 0;
@@ -114,6 +115,24 @@ test('Calendar generates valid Google Calendar URL without API key', () => {
   assert.ok(url.startsWith('https://calendar.google.com/calendar/render?'));
   assert.ok(url.includes('text=Docker%20Masterclass'));
   assert.ok(url.includes('dates=20261020T100000%2F20261020T120000'));
+});
+
+// 5. Google Drive Sync Merge Test
+test('DriveSync.mergeEvents merges remote and local events by updatedAt without data loss', () => {
+  const local = [
+    { id: '1', title: 'Local newer', date: '2026-10-21', updatedAt: '2026-10-21T10:00:00Z' },
+    { id: '2', title: 'Only local', date: '2026-10-22', updatedAt: '2026-10-21T09:00:00Z' }
+  ];
+  const remote = [
+    { id: '1', title: 'Remote older', date: '2026-10-21', updatedAt: '2026-10-21T08:00:00Z' },
+    { id: '3', title: 'Only remote', date: '2026-10-23', updatedAt: '2026-10-21T07:00:00Z' }
+  ];
+  const merged = DriveSync.mergeEvents(local, remote);
+  assert.strictEqual(merged.length, 3);
+  const item1 = merged.find(x => x.id === '1');
+  assert.strictEqual(item1.title, 'Local newer');
+  assert.ok(merged.find(x => x.id === '2'));
+  assert.ok(merged.find(x => x.id === '3'));
 });
 
 console.log(`\nResults: ${passed} passed, ${failed} failed.`);

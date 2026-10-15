@@ -1,5 +1,6 @@
 # Binary executables (distribute via GitHub Releases instead of repo history)
 *.exe
+*.zip
 WorkshopHub.exe
 desktop_backup/
 

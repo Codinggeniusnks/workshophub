@@ -50,6 +50,10 @@ For Windows users who prefer a native desktop application window instead of runn
   - **Paste text**: Paste registration confirmation emails or Google Form receipts.
   - **Upload poster/flyer screenshots**: Gemini vision automatically extracts workshop title, date, start/end time, organizer, online meeting links, or physical venue from the image.
   - **Offline Regex Fallback**: Built-in deterministic extractor works even without an internet connection or without an AI key.
+- **☁️ Personal Google Drive Sync (Phone ↔ PC)**:
+  - Synchronize your schedule between your smartphone and your PC without any middleman server.
+  - **Zero Developer Access**: Stored strictly in your personal Google Drive hidden App Data folder (`spaces=appDataFolder`).
+  - **Smart Merge**: Automatically merges offline updates from any device by timestamp without overwriting or losing events.
 - **💬 "Ask Your Schedule" AI Assistant**: Ask natural-language questions about your schedule (*"What sessions do I have this weekend?"*, *"Do I have any schedule clashes?"*, *"Give me a prep checklist"*).
 - **⚠️ Schedule Clash & Conflict Detection**: Automatically warns you if two registered workshops overlap on the same date.
 - **📅 1-Click Calendar Sync (Zero API Keys)**:
@@ -57,6 +61,50 @@ For Windows users who prefer a native desktop application window instead of runn
   - One-click **`.ics` download** compatible with Apple Calendar, Outlook, and mobile devices.
 - **⏰ Smart Agenda Timeline**: Grouped into *Today*, *Tomorrow*, *This Week*, *Later*, and *Past* with live countdown badges (`⚡ Live Now!`, `🚨 Today at 2:00 PM`, `In 2 days`).
 - **💾 Full Data Portability**: Backup and restore your schedule anytime using **JSON Export/Import** or export to **CSV** for Google Sheets / Excel.
+
+---
+
+## ☁️ Personal Google Drive Sync Setup (Zero-Access Cloud Sync)
+
+Want to view and manage your workshops seamlessly on both your **phone** and **computer**? WorkshopHub uses Google's secure **AppData Folder API**:
+
+### 🛡️ Why is this 100% Private?
+1. **0% Developer Access**: The developer does not have a server or database. The sync communication occurs purely client-side directly between your browser and Google's official servers.
+2. **Hidden AppData Folder**: Data is saved to `workshophub_personal_schedule.json` in a hidden app folder inside **your own Google account**. It is invisible in standard Drive folders and inaccessible to any third parties.
+
+### ⚙️ Quick Setup (Takes ~2 minutes):
+1. Go to the **[Google Cloud Console](https://console.cloud.google.com/)** and create a free project (e.g. `My WorkshopHub`).
+2. Navigate to **APIs & Services > Credentials**.
+3. Configure the **OAuth Consent Screen** (User Type: External) and add your own Google email as a test user.
+4. Click **Create Credentials > OAuth client ID**:
+   - Application type: **Web application**
+   - **Authorized JavaScript origins**:
+     - `https://codinggeniusnks.github.io`
+     - `http://127.0.0.1:47821` (for desktop PC launcher)
+5. Copy your **Client ID** (looks like `123456789-xxxxxx.apps.googleusercontent.com`).
+6. In WorkshopHub:
+   - Tap **⚙️ Settings** > scroll down to **Personal Google Drive Sync**.
+   - Paste your **Client ID** and click **Sign In with Google**.
+   - Grant access, and your events will sync automatically across all your devices!
+
+---
+
+## 🚀 What's Updated in This Release?
+
+- **Added Personal Google Drive Sync (`driveSync.js`)**:
+  - Connect your personal Google account to keep schedules synchronized across Phone (PWA) and PC (Desktop `.exe` / Web).
+  - 100% serverless, zero developer access guarantee.
+  - Bidirectional conflict-free merge algorithm preserving latest updates from both devices.
+- **New Sync Status Indicator**:
+  - Top header now displays real-time sync status (`☁️ Sign In & Sync`, `Syncing...`, `Synced (Just now)`).
+  - One-click instant manual sync button.
+- **Clean Slate for New Users**:
+  - Removed all hardcoded demo data so newly launched apps start completely clean.
+- **Fixed Desktop Port Consistency**:
+  - Desktop `.exe` launcher now runs on static port `47821` so `localStorage` events persist permanently across restarts.
+- **Enhanced Privacy & Security**:
+  - Git history cleaned of personal emails.
+  - Strict XSS escaping and URL protocol sanitization (`safeUrl`) for meeting links and forms.
 
 ---
 
