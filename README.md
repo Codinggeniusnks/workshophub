@@ -33,12 +33,18 @@ Have you ever registered for multiple tech workshops, webinars, or university pr
 
 ---
 
-## 🚀 Live Demo & Quick Start
+## 🚀 How to Run & Quick Start
 
-### Option 1: Open Directly in Your Browser (No Installation Required!)
-Simply double-click or open `index.html` in any web browser (Chrome, Edge, Firefox, Safari).
+### Option 1: Run as a Desktop App (Fastest & Most User-Friendly!)
+Simply double-click **`WorkshopHub.exe`** in the project folder!
+- Launches as a standalone native desktop app (no URL address bar, no tabs, clean desktop window).
+- Ultra-lightweight (only 8 KB).
+- Stores all your data in an isolated, private local profile.
 
-### Option 2: Deploy to GitHub Pages (Free, in 30 Seconds)
+### Option 2: Open in Any Web Browser
+Double-click or open `index.html` in your favorite browser (Chrome, Edge, Firefox, Safari).
+
+### Option 3: Deploy to GitHub Pages (Free, in 30 Seconds)
 1. Fork or push this repository to your GitHub account:
    ```bash
    git init
