@@ -1,13 +1,13 @@
 /**
  * WorkshopHub Store
- * Manages localStorage, settings, demo mode, and safe backup/export.
+ * Manages client-side storage, settings, and safe JSON/CSV export.
+ * Clean, personal storage with zero demo data.
  */
 
 const Store = {
   KEYS: {
     EVENTS: 'workshophub_events_v2',
-    SETTINGS: 'workshophub_settings_v2',
-    DEMO_FLAG: 'workshophub_demo_mode_v2'
+    SETTINGS: 'workshophub_settings_v2'
   },
 
   DEFAULT_SETTINGS: {
@@ -23,106 +23,6 @@ const Store = {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
     return d.toISOString().split('T')[0];
-  },
-
-  getSampleEvents() {
-    return [
-      {
-        id: 'demo-1',
-        title: 'Generative AI & Multimodal Prompting Workshop',
-        organizer: 'Google Developer Group (GDG)',
-        category: 'AI & Data',
-        mode: 'online',
-        date: this.getRelativeDate(1),
-        startTime: '14:00',
-        endTime: '16:30',
-        venue: 'Google Meet',
-        meetingLink: 'https://meet.google.com/abc-defg-hij',
-        passcode: 'GDG-AI-2026',
-        description: 'Explore multimodal prompt engineering, Gemini API integrations, and hands-on LLM assistant building.',
-        formLink: 'https://forms.gle/sampleGDGForm',
-        materialsLink: 'https://github.com/example/gdg-workshop-slides',
-        notes: 'Pre-requisite: Set up free Google AI Studio account beforehand.',
-        status: 'registered',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'demo-2',
-        title: 'Full-Stack Web Dev & Modern API Architecture',
-        organizer: 'Tech Innovators Community',
-        category: 'Web & Software',
-        mode: 'in-person',
-        date: this.getRelativeDate(3),
-        startTime: '09:30',
-        endTime: '13:00',
-        venue: 'Innovation Hub, Hall B, Level 3, Cyberjaya',
-        meetingLink: '',
-        passcode: '',
-        description: 'Frontend component patterns, REST & GraphQL design, caching strategies, and deployment pipelines.',
-        formLink: 'https://forms.gle/sampleWebForm',
-        materialsLink: 'https://drive.google.com/drive/folders/sampleMaterials',
-        notes: 'Bring your laptop with Node.js LTS installed. Registration starts at 9:00 AM.',
-        status: 'confirmed',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'demo-3',
-        title: 'Technical Resume & Interview Masterclass',
-        organizer: 'Career Services & Alumni Network',
-        category: 'Career & Professional',
-        mode: 'online',
-        date: this.getRelativeDate(5),
-        startTime: '20:00',
-        endTime: '21:30',
-        venue: 'Zoom Meeting',
-        meetingLink: 'https://zoom.us/j/9876543210',
-        passcode: 'CAREER2026',
-        description: 'Live resume roasting, GitHub portfolio optimization, and STAR method mock questions with tech hiring leads.',
-        formLink: 'https://forms.gle/sampleCareerForm',
-        materialsLink: '',
-        notes: 'Submit 1-page PDF resume before session if you want live feedback.',
-        status: 'registered',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'demo-4',
-        title: 'Docker & Kubernetes Containerization Lab',
-        organizer: 'Cloud Native Computing Group',
-        category: 'Cloud & DevOps',
-        mode: 'online',
-        date: this.getRelativeDate(8),
-        startTime: '10:00',
-        endTime: '15:00',
-        venue: 'Microsoft Teams',
-        meetingLink: 'https://teams.microsoft.com/l/meetup-join/sample',
-        passcode: '',
-        description: 'Container lifecycle, Dockerfile optimization, multi-stage builds, and basic Kubernetes pod deployment.',
-        formLink: 'https://forms.gle/sampleDockerForm',
-        materialsLink: 'https://github.com/example/docker-k8s-lab',
-        notes: 'Have Docker Desktop running prior to joining.',
-        status: 'registered',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'demo-5',
-        title: 'UI/UX Design Systems in Figma',
-        organizer: 'Designers Guild',
-        category: 'Design & UI/UX',
-        mode: 'in-person',
-        date: this.getRelativeDate(-2),
-        startTime: '13:00',
-        endTime: '17:00',
-        venue: 'Creative Media Studio, Block C',
-        meetingLink: '',
-        passcode: '',
-        description: 'Tokens, auto-layout, variables, and scalable design components across cross-functional teams.',
-        formLink: 'https://forms.gle/sampleDesignForm',
-        materialsLink: 'https://www.figma.com/community/file/sample',
-        notes: 'Session completed. Slides and exercise templates downloaded.',
-        status: 'attended',
-        createdAt: new Date().toISOString()
-      }
-    ];
   },
 
   // Settings
@@ -154,29 +54,19 @@ const Store = {
     localStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(settings));
   },
 
-  // Demo Mode
-  isDemoMode() {
-    const flag = localStorage.getItem(this.KEYS.DEMO_FLAG);
-    // If user has never used the app, default to demo mode so it doesn't look empty
-    if (flag === null) {
-      const userEvents = localStorage.getItem(this.KEYS.EVENTS);
-      return userEvents === null;
-    }
-    return flag === 'true';
-  },
-
-  setDemoMode(isDemo) {
-    localStorage.setItem(this.KEYS.DEMO_FLAG, isDemo ? 'true' : 'false');
-  },
-
-  // Events
+  // Events (Clean personal storage - no sample/demo data)
   getEvents() {
-    if (this.isDemoMode()) {
-      return this.getSampleEvents();
-    }
     try {
       const raw = localStorage.getItem(this.KEYS.EVENTS);
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      // Clean out any legacy demo data entries
+      const cleaned = parsed.filter(e => e && e.id && !e.id.startsWith('demo-'));
+      if (cleaned.length !== parsed.length) {
+        this.saveEvents(cleaned);
+      }
+      return cleaned;
     } catch (e) {
       console.error('Failed to parse stored events:', e);
       return [];
@@ -184,10 +74,6 @@ const Store = {
   },
 
   saveEvents(events) {
-    if (this.isDemoMode()) {
-      // If user edits while in demo mode, automatically switch to personal mode
-      this.setDemoMode(false);
-    }
     localStorage.setItem(this.KEYS.EVENTS, JSON.stringify(events));
   },
 
@@ -246,10 +132,9 @@ const Store = {
     return filtered;
   },
 
-  // Export JSON (CRITICAL: Zero leak - strictly strips API keys and personal tokens)
+  // Export JSON (Strict zero-leak: API keys are excluded)
   exportJson() {
     const events = this.getEvents();
-    // Exclude API keys or private settings from export
     const exportData = {
       version: '2.0',
       exportedAt: new Date().toISOString(),
@@ -290,7 +175,6 @@ const Store = {
         importedCount++;
       });
 
-      this.setDemoMode(false);
       this.saveEvents(existing);
       return { success: true, count: importedCount };
     } catch (err) {
@@ -301,7 +185,7 @@ const Store = {
   // Clear Personal Events
   clearPersonalEvents() {
     localStorage.removeItem(this.KEYS.EVENTS);
-    this.setDemoMode(false);
+    localStorage.removeItem('workshophub_demo_mode_v2');
   }
 };
 

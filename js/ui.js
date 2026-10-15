@@ -20,37 +20,9 @@ const UI = {
 
   refresh() {
     this.activeEvents = Store.getEvents();
-    this.renderHeader();
     this.renderMetrics();
     this.renderSpotlight();
     this.renderActiveTab();
-  },
-
-  // 1. Header & Mode Indicator
-  renderHeader() {
-    const isDemo = Store.isDemoMode();
-    const badge = document.getElementById('mode-indicator-badge');
-    const demoBtn = document.getElementById('header-demo-toggle-btn');
-
-    if (badge) {
-      if (isDemo) {
-        badge.innerHTML = `
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
-            <span class="w-1.5 h-1.5 mr-1 bg-amber-500 rounded-full animate-ping"></span> Demo Data
-          </span>
-        `;
-      } else {
-        badge.innerHTML = `
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
-            <span class="w-1.5 h-1.5 mr-1 bg-emerald-500 rounded-full"></span> My Personal Data
-          </span>
-        `;
-      }
-    }
-
-    if (demoBtn) {
-      demoBtn.textContent = isDemo ? 'Switch to My Data' : 'View Demo Events';
-    }
   },
 
   // 2. Metrics Bar
@@ -558,14 +530,6 @@ const UI = {
     document.getElementById('filter-category')?.addEventListener('change', (e) => {
       this.currentFilterCategory = e.target.value;
       this.refresh();
-    });
-
-    // Header demo switch
-    document.getElementById('header-demo-toggle-btn')?.addEventListener('click', () => {
-      const isDemo = Store.isDemoMode();
-      Store.setDemoMode(!isDemo);
-      this.refresh();
-      this.showToast(isDemo ? 'Switched to My Personal Space' : 'Switched to Demo Sample Events');
     });
   },
 
