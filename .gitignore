@@ -1,0 +1,23 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and sensitive keys (strictly prohibited from repo)
+.env
+.env.*
+*.local
+secrets.json
+credentials.json
+
+# Local personal data dumps
+personal_data.json
+my_events.json
+*.backup.json
+
+# Node & package manager directories (if ever initialized)
+node_modules/
+package-lock.json
+dist/
+.vscode/
+.idea/

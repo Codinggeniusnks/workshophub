@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkshopHub // Programme & Event Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation & Action Bar -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Brand & Mode Indicator -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-200">
+          W
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-black tracking-tight text-slate-900">WorkshopHub</h1>
+            <span id="mode-indicator-badge"></span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium">Personal Programme, Workshop & Webinar Allocator</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Demo / Personal Toggle -->
+        <button id="demo-mode-toggle" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition"></button>
+
+        <!-- Smart Ingest Button -->
+        <button id="open-smart-parse-btn" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="Paste Google Form confirmation or email">
+          <span>📋</span> Smart Paste
+        </button>
+
+        <!-- Insert Event Primary Button -->
+        <button id="open-add-modal-btn" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 transition">
+          <span>+</span> Insert Programme
+        </button>
+
+        <!-- Backup & Tools Dropdown -->
+        <div class="relative group">
+          <button class="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+            <span>⚙️ Data</span>
+            <span class="text-[10px]">▼</span>
+          </button>
+          <div class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 hidden group-hover:block z-50">
+            <button id="export-json-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
+              <span>Backup (JSON)</span>
+              <span>💾</span>
+            </button>
+            <button id="export-csv-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
+              <span>Export to Excel (CSV)</span>
+              <span>📊</span>
+            </button>
+            <button id="import-json-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700 flex items-center justify-between">
+              <span>Restore from Backup</span>
+              <span>📥</span>
+            </button>
+            <input type="file" id="json-file-input" accept=".json" class="hidden">
+            <div class="my-1 border-t border-slate-100"></div>
+            <button id="clear-data-btn" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-red-50 text-red-600 flex items-center justify-between font-semibold">
+              <span>Wipe Personal Data</span>
+              <span>🗑️</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- KPI Metric Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Total Registered</div>
+        <div id="stat-total" class="text-2xl font-black text-slate-900">0</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Programmes in tracker</div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Upcoming</div>
+        <div id="stat-upcoming" class="text-2xl font-black text-indigo-600">0</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Scheduled ahead</div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Happening This Week</div>
+        <div id="stat-this-week" class="text-2xl font-black text-amber-600">0</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Requires immediate prep</div>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Online / In-Person</div>
+        <div id="stat-online-inperson" class="text-2xl font-black text-emerald-600">0 / 0</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Virtual vs Physical</div>
+      </div>
+    </section>
+
+    <!-- Next Upcoming Workshop Spotlight -->
+    <section id="spotlight-banner" class="hidden"></section>
+
+    <!-- Search, Filters & View Options -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        
+        <!-- Live Search -->
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+            🔍
+          </span>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search by title, speaker, venue, or keyword..." 
+            class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+          >
+        </div>
+
+        <!-- Filter Dropdowns -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Format / Mode Filter -->
+          <select id="filter-mode" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">🌐 All Formats (Online & Physical)</option>
+            <option value="online">Virtual / Online Only</option>
+            <option value="in-person">In-Person Only</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="filter-status" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">⏳ All Statuses</option>
+            <option value="upcoming">Upcoming Only</option>
+            <option value="past">Past / Concluded Only</option>
+            <option value="registered">Registered</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="attended">Attended</option>
+          </select>
+
+          <!-- Category Filter -->
+          <select id="filter-category" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">🏷️ All Categories</option>
+            <option value="AI & Data">AI & Data</option>
+            <option value="Web & Software">Web & Software</option>
+            <option value="Career & Professional">Career & Professional</option>
+            <option value="Cloud & DevOps">Cloud & DevOps</option>
+            <option value="Design & UI/UX">Design & UI/UX</option>
+            <option value="Academic & Research">Academic & Research</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <!-- View Switcher -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+            <button id="view-cards-btn" class="px-2.5 py-1 text-xs font-bold rounded-lg transition bg-white shadow-xs text-indigo-700" title="Cards View">
+              ⊞ Cards
+            </button>
+            <button id="view-table-btn" class="px-2.5 py-1 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900" title="Table View">
+              ☰ Table
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Events List / Grid Area -->
+    <section id="events-container"></section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-12 py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>WorkshopHub • Privacy-by-design & Zero-leak architecture. All data saved locally on your device.</p>
+      <p class="font-medium text-slate-500">Ready for GitHub Pages • Open Source</p>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: Insert / Edit Programme Details                   -->
+  <!-- ======================================================== -->
+  <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 my-8">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h2 id="modal-title" class="text-lg font-bold text-slate-900">Insert New Programme / Workshop</h2>
+          <p class="text-xs text-slate-500">Record all your registration details so you never miss a session.</p>
+        </div>
+        <button id="close-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <form id="event-form" class="mt-4 space-y-4">
+        <input type="hidden" id="form-id">
+
+        <!-- Title & Category -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Programme / Workshop Name *</label>
+            <input type="text" id="form-title" required placeholder="e.g. Modern Full-Stack Development Masterclass" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+            <select id="form-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="AI & Data">AI & Data</option>
+              <option value="Web & Software">Web & Software</option>
+              <option value="Career & Professional">Career & Professional</option>
+              <option value="Cloud & DevOps">Cloud & DevOps</option>
+              <option value="Design & UI/UX">Design & UI/UX</option>
+              <option value="Academic & Research">Academic & Research</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Organizer & Format / Mode -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Organizer / Host / Speaker</label>
+            <input type="text" id="form-organizer" placeholder="e.g. Google Cloud Community, University CS Club" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Format / Mode *</label>
+            <select id="form-mode" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="online">🌐 Virtual / Online (Zoom, Meet, Teams)</option>
+              <option value="in-person">📍 In-Person (Campus, Office, Auditorium)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date & Times -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+            <input type="date" id="form-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time</label>
+            <input type="time" id="form-start-time" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">End Time</label>
+            <input type="time" id="form-end-time" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Venue / Meeting Location Details -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Venue / Platform</label>
+            <input type="text" id="form-venue" placeholder="e.g. Google Meet, Hall 3, Cyberjaya" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div class="md:col-span-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Meeting Link / Map URL</label>
+            <input type="url" id="form-meeting-link" placeholder="https://meet.google.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div class="md:col-span-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Passcode / PIN (if any)</label>
+            <input type="text" id="form-passcode" placeholder="e.g. 123456" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Description: What is it about? -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">What is it about? (Topic Summary / Objectives)</label>
+          <textarea id="form-description" rows="2" placeholder="Briefly summarize what this workshop covers so you remember why you registered..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"></textarea>
+        </div>
+
+        <!-- Google Form link & Materials link -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Google Form / Registration Link</label>
+            <input type="url" id="form-form-link" placeholder="https://forms.gle/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Slides / Materials / Repo Link</label>
+            <input type="url" id="form-materials-link" placeholder="https://drive.google.com/... or GitHub link" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Notes & Status -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Preparation Checklist / Personal Notes</label>
+            <input type="text" id="form-notes" placeholder="e.g. Install Node.js v20, bring student ID, prepare questions" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+            <select id="form-status" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="registered">Registered</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="attended">Attended</option>
+              <option value="missed">Missed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" id="cancel-modal-btn" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
+            Save Programme
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: Smart Paste (Google Form / Confirmation Parser)   -->
+  <!-- ======================================================== -->
+  <div id="smart-parse-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Smart Paste Confirmation</h2>
+          <p class="text-xs text-slate-500">Paste your Google Form email or registration response to auto-fill details.</p>
+        </div>
+        <button id="close-parse-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Paste Raw Text or Confirmation Email</label>
+          <textarea 
+            id="smart-parse-input" 
+            rows="7" 
+            placeholder="Example:&#10;Thank you for registering for 'Next.js & Supabase Masterclass'!&#10;Date: 2026-10-25&#10;Time: 14:00 - 16:30&#10;Join Google Meet: https://meet.google.com/abc-defg-hij&#10;Organized by GDG..." 
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+          ></textarea>
+        </div>
+        
+        <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-900">
+          💡 <strong>Zero-Leak Guarantee:</strong> Text is analyzed 100% locally in your browser. Nothing is sent to any server or external API.
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onclick="closeSmartParseModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+            Cancel
+          </button>
+          <button type="button" id="execute-parse-btn" class="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
+            ⚡ Extract & Fill Form
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
