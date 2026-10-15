@@ -1,65 +1,72 @@
 # WorkshopHub 📅🤖
 > **An intelligent, privacy-first personal dashboard to allocate, organize, and track every programme, workshop, and webinar you register for.**
 
-Have you ever registered for multiple workshops or tech webinars via **Google Forms**, only to forget:
-- *What date and time was it scheduled for?*
-- *Is it on Google Meet, Zoom, MS Teams, or a physical campus hall?*
-- *What was the workshop actually about?*
-- *Do you have overlapping sessions or missing preparation materials?*
+---
 
-**WorkshopHub** automatically organizes your schedule with **AI Multimodal Ingestion (text + flyer screenshots)**, **Schedule Clash Detection**, and **1-Click Calendar Syncing**, available as an **installable Mobile PWA (iOS & Android)**, a **Desktop App**, or hosted on **GitHub Pages**.
+### 🔒 100% Client-Side Local Storage — Your Data is Private to You!
+> **Important Privacy Notice:**  
+> When you use WorkshopHub, all your registered programmes, notes, dates, and meeting links are stored **strictly in your own device's local storage (`localStorage`)**.
+> - **Zero Server / Zero Database**: There is NO backend server collecting your schedule.
+> - **Zero Data Sharing**: Other people visiting the website cannot see your data, and you cannot see theirs. Each user gets their own completely isolated, private dashboard.
+> - **Zero Leaks**: Optional AI API keys are saved only in your personal browser and are never uploaded to GitHub or included in exported files.
 
 ---
 
-## ✨ Features
-
-### 🤖 Intelligent AI & Smart Organization
-- **Multimodal AI Ingest (Gemini 2.0 Flash)**:
-  - **Option A: Paste text** from Google Form receipts or confirmation emails.
-  - **Option B: Upload an image / poster screenshot** — Gemini vision reads dates, times, speaker, and links straight from the flyer!
-  - **Offline Heuristic Fallback**: Built-in deterministic regex parser works even without an internet connection or without an API key.
-- **💬 "Ask Your Schedule" AI Assistant**: Chat with your workshops (*"What sessions do I have this weekend?"*, *"Do I have any clashes?"*, *"Give me a prep checklist"*).
-- **⚠️ Schedule Clash & Conflict Detection**: Automatically highlights overlapping workshops on the same day.
-- **🔍 Smart Agenda Timeline**: Grouped into *Today*, *Tomorrow*, *This Week*, *Later*, and *Past* with live countdown badges (`⚡ Live Now!`, `🚨 Today at 2:00 PM`, `In 2 days`).
-
-### 📱 Mobile-First & PWA
-- **Installable on Android & iOS**: Add to Home Screen in 1 tap directly from your browser.
-- **Works 100% Offline**: Service worker caches all assets locally.
-- **Android Web Share Target**: Share confirmation emails or WhatsApp messages directly to WorkshopHub to auto-extract details!
-
-### 📅 Zero-API Calendar Sync
-- **1-Click "Add to Google Calendar"**: Direct dynamic URL generator pre-filling title, time, venue, and description without Google OAuth credentials.
-- **Download `.ics`**: Generates RFC-compliant calendar files with timezone tags compatible with Apple Calendar and Microsoft Outlook.
-
-### 🔒 Privacy-by-Design & Zero-Leak Security
-- **No Backend, No External Telemetry, Zero Stored Secrets**:
-  - All data is stored in the browser's `localStorage`.
-  - Your personal schedule is completely private to your device.
-  - Optional Gemini API keys are stored in `localStorage` only, passed via secure HTTPS headers, and **strictly excluded from JSON/CSV exports**.
-- **Multi-User Ready**: When published to GitHub Pages, every visitor gets their own private workspace with an "Insert Programme" form. Includes a 1-click **Demo Mode** toggle for portfolio showcase.
+## 🌐 Live Web App Link
+Open immediately on any phone, tablet, or computer:  
+👉 **[https://codinggeniusnks.github.io/workshophub/](https://codinggeniusnks.github.io/workshophub/)**
 
 ---
 
-## 🚀 Quick Start
+## 📱 Phone Users vs. 💻 PC Users: What is the Difference?
 
-### 1. Web Browser & Mobile Phone (PWA)
-1. Open `index.html` in your browser, or visit your deployed GitHub Pages URL.
-2. On mobile (Chrome/Safari), tap **Install** or **Share → Add to Home Screen**.
+| Feature | 📱 Phone Users (iOS & Android) | 💻 PC Users (Windows) |
+| :--- | :--- | :--- |
+| **Primary Method** | **Web App (PWA)** | **Web App OR Desktop `.exe`** |
+| **How to Access** | Open the [Web Link](https://codinggeniusnks.github.io/workshophub/) on Safari or Chrome | Open the [Web Link](https://codinggeniusnks.github.io/workshophub/) OR double-click `WorkshopHub.exe` |
+| **Installation** | Tap **"Install"** or **"Add to Home Screen"** (runs as an app, no App Store needed!) | Download the **[WorkshopHub.exe Release](https://github.com/Codinggeniusnks/workshophub/releases)** |
+| **Offline Support** | ✅ Yes, works 100% offline | ✅ Yes, works 100% offline |
+| **Window Style** | Fullscreen mobile app with ergonomic bottom navigation | Clean borderless desktop window without browser URL bars or tabs |
+| **Storage Location** | Your phone browser's private local storage | Your PC's private local storage |
 
-### 2. Desktop App (Windows)
-Double-click `WorkshopHub.exe` (or compile with `powershell -File desktop/build.ps1`):
-- Runs in a clean, standalone native desktop window (no browser address bars or tabs).
-- Uses a fixed local port (`47821`) so your `localStorage` data persists permanently.
-- Single-instance protection prevents duplicate background processes.
+---
+
+## 💻 Download for PC (Windows Standalone `.exe`)
+
+For Windows users who prefer a native desktop application window instead of running inside a web browser:
+
+1. Go to **[GitHub Releases](https://github.com/Codinggeniusnks/workshophub/releases)**.
+2. Download **`WorkshopHub-Windows-v2.0.zip`** (only ~40 KB!).
+3. Extract the ZIP folder anywhere on your computer.
+4. Double-click **`WorkshopHub.exe`** to launch!
+   - Runs in a clean, standalone desktop window (no browser address bar, no tabs).
+   - Uses a fixed local port (`47821`) so your events stay saved permanently across restarts.
+
+---
+
+## ✨ Core Features
+
+- **🤖 Multimodal AI Ingest (Gemini 2.0 Flash)**:
+  - **Paste text**: Paste registration confirmation emails or Google Form receipts.
+  - **Upload poster/flyer screenshots**: Gemini vision automatically extracts workshop title, date, start/end time, organizer, online meeting links, or physical venue from the image.
+  - **Offline Regex Fallback**: Built-in deterministic extractor works even without an internet connection or without an AI key.
+- **💬 "Ask Your Schedule" AI Assistant**: Ask natural-language questions about your schedule (*"What sessions do I have this weekend?"*, *"Do I have any schedule clashes?"*, *"Give me a prep checklist"*).
+- **⚠️ Schedule Clash & Conflict Detection**: Automatically warns you if two registered workshops overlap on the same date.
+- **📅 1-Click Calendar Sync (Zero API Keys)**:
+  - Direct **"Add to Google Calendar"** dynamic link generation.
+  - One-click **`.ics` download** compatible with Apple Calendar, Outlook, and mobile devices.
+- **⏰ Smart Agenda Timeline**: Grouped into *Today*, *Tomorrow*, *This Week*, *Later*, and *Past* with live countdown badges (`⚡ Live Now!`, `🚨 Today at 2:00 PM`, `In 2 days`).
+- **💾 Full Data Portability**: Backup and restore your schedule anytime using **JSON Export/Import** or export to **CSV** for Google Sheets / Excel.
 
 ---
 
 ## 🔑 How to Get a Free Gemini API Key (Optional)
 
-WorkshopHub works completely offline with built-in regex parsers. To enable AI vision and chatbot features:
+WorkshopHub works completely offline with built-in regex parsers. To enable AI image vision and the schedule chatbot:
 1. Visit **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**.
 2. Sign in with your Google Account and click **Create API key**.
 3. In WorkshopHub, tap **⚙️ Settings**, paste your key, and click **Save**.
+*(Your key is stored only in your own browser's local storage and is never uploaded anywhere.)*
 
 ---
 
