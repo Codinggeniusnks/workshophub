@@ -1,0 +1,46 @@
+name: Enterprise CI Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    name: Lint, Test & Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify JavaScript Syntax
+        run: |
+          node --check js/safe.js
+          node --check js/store.js
+          node --check js/parser.js
+          node --check js/ai.js
+          node --check js/organiser.js
+          node --check js/calendar.js
+          node --check js/ui.js
+          node --check js/app.js
+          node --check sw.js
+
+      - name: Execute Automated Unit Tests
+        run: node tests/run.js
+
+      - name: Privacy & Secret Scan
+        run: |
+          echo "Scanning for accidental token or email commits..."
+          # Disallow raw hardcoded Google API keys
+          if grep -r -E "AIzaSy[A-Za-z0-9_-]{33}" js/ css/ index.html; then
+            echo "ERROR: Hardcoded Google API key found in code!"
+            exit 1
+          fi
+          echo "Security scan clean!"
