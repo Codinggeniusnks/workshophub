@@ -583,10 +583,16 @@ const UI = {
     }
 
     modal.classList.remove('hidden');
-    // Scroll container to top so mobile screens always show the Title field
-    modal.scrollTop = 0;
-    const inner = modal.querySelector('.min-h-full');
-    if (inner) inner.scrollTop = 0;
+    document.body.classList.add('overflow-hidden');
+    form.scrollTop = 0;
+
+    const titleInput = document.getElementById('form-title');
+    if (titleInput) {
+      setTimeout(() => {
+        form.scrollTop = 0;
+        titleInput.focus();
+      }, 50);
+    }
   },
 
   populateEventForm(event, modalTitle) {
@@ -611,6 +617,7 @@ const UI = {
 
   closeEventModal() {
     document.getElementById('event-modal')?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
   },
 
   // 11. Smart Ingest Modal (Text + Vision Screenshot OCR)
@@ -621,10 +628,12 @@ const UI = {
     document.getElementById('smart-parse-image-input').value = '';
     document.getElementById('smart-image-preview-container').classList.add('hidden');
     modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
   },
 
   closeSmartParseModal() {
     document.getElementById('smart-parse-modal')?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
   },
 
   // 12. Settings Modal
@@ -653,10 +662,12 @@ const UI = {
     }
 
     modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
   },
 
   closeSettingsModal() {
     document.getElementById('settings-modal')?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
   },
 
   // 13. Toast with Undo

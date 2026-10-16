@@ -3,7 +3,7 @@
  * Enables offline caching, offline app launches, and PWA installation.
  */
 
-const CACHE_NAME = 'workshophub-cache-v3';
+const CACHE_NAME = 'workshophub-cache-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -76,6 +76,25 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache external Google AI API requests
   if (url.hostname.includes('googleapis.com')) {
+    return;
+  }
+
+  // Navigation requests (HTML documents): NETWORK-FIRST with cache fallback
+  // This guarantees smartphones and PWAs always get fresh UI updates immediately!
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('./index.html').then(res => res || caches.match('./'));
+        })
+    );
     return;
   }
 

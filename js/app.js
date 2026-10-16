@@ -170,7 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
       UI.closeSmartParseModal();
       UI.openEventModal(extracted);
 
-      UI.showToast('✨ Details extracted & pre-filled! Review and click Save.');
+      if (extracted._noTextDetected) {
+        UI.showToast('⚠️ Could not read text in image. Tip: Add free Gemini key in Settings for AI vision, or type title above!');
+      } else if (extracted.title) {
+        UI.showToast(`✨ Pre-filled: ${extracted.title}`);
+      } else {
+        UI.showToast('✨ Details extracted & pre-filled! Review and click Save.');
+      }
     } catch (err) {
       alert('Extraction failed: ' + err.message);
     } finally {

@@ -200,23 +200,29 @@
   <!-- ======================================================== -->
   <!-- MODAL: Insert / Edit Programme                           -->
   <!-- ======================================================== -->
-  <div id="event-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
-      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+  <div id="event-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex flex-col sm:p-4 sm:flex sm:items-center sm:justify-center overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Sticky Header: Permanently pinned at top on all screens -->
+      <div class="sticky top-0 z-30 shrink-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between shadow-xs">
         <div>
           <h2 id="modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Insert New Programme / Workshop</h2>
-          <p class="text-xs text-slate-400">Allocate details so you never forget where or when it is held.</p>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Allocate details so you never forget where or when it is held.</p>
         </div>
-        <button id="close-event-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button id="close-event-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
-      <form id="event-form" class="mt-4 space-y-3.5 text-xs">
+      <!-- Scrollable Form Body -->
+      <form id="event-form" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 text-xs overscroll-contain pb-20 sm:pb-6">
         <input type="hidden" id="form-id">
 
-        <div>
-          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Programme / Workshop Name *</label>
-          <input type="text" id="form-title" required placeholder="e.g. Modern Full-Stack Development Masterclass" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        <!-- Programme Name Field: Bold, accented, and at the absolute top -->
+        <div class="bg-indigo-50/70 dark:bg-slate-900/80 p-3.5 rounded-2xl border border-indigo-200/80 dark:border-slate-700 shadow-xs">
+          <label class="block font-bold text-indigo-950 dark:text-indigo-300 mb-1.5 text-xs flex items-center justify-between">
+            <span>Programme / Workshop Name *</span>
+            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wider">Required</span>
+          </label>
+          <input type="text" id="form-title" required placeholder="e.g. Road To DevFest KL 2026" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-indigo-300 dark:border-slate-600 rounded-xl font-bold text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-xs">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -311,33 +317,34 @@
           <button type="button" id="cancel-event-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
-          <button type="submit" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+          <button type="submit" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
             Save Programme
           </button>
         </div>
       </form>
     </div>
   </div>
-</div>
 
   <!-- ======================================================== -->
   <!-- MODAL: Smart Ingest (Text + Screenshot OCR)              -->
   <!-- ======================================================== -->
-  <div id="smart-parse-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
-      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+  <div id="smart-parse-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex flex-col sm:p-4 sm:flex sm:items-center sm:justify-center overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Sticky Header -->
+      <div class="sticky top-0 z-30 shrink-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between shadow-xs">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>📋 Smart Ingest</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-extrabold uppercase">AI Powered</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 font-extrabold uppercase">AI Powered</span>
           </h2>
-          <p class="text-xs text-slate-400">Paste an email receipt, or upload a flyer / screenshot to extract details automatically.</p>
+          <p class="text-[11px] text-slate-400">Paste text or upload a flyer / screenshot to extract details automatically.</p>
         </div>
-        <button id="close-smart-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button id="close-smart-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
-      <div class="mt-4 space-y-3.5 text-xs">
+      <!-- Scrollable Body -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 text-xs overscroll-contain pb-20 sm:pb-6">
         <div>
           <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Option A: Paste Confirmation Email / Google Form Receipt</label>
           <textarea 
@@ -357,42 +364,44 @@
             class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
           >
           <div id="smart-image-preview-container" class="mt-2 hidden">
-            <img id="smart-image-preview" alt="Preview" class="max-h-36 rounded-xl border border-slate-200 object-contain mx-auto">
+            <img id="smart-image-preview" alt="Preview" class="max-h-36 rounded-xl border border-slate-200 dark:border-slate-700 object-contain mx-auto">
           </div>
         </div>
 
-        <div class="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-900/30 text-indigo-950 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 leading-relaxed">
-          🔒 <strong>Privacy Assurance:</strong> Works offline via built-in heuristics, or directly with your own Gemini API key. No data is stored on any server.
+        <!-- Privacy & Gemini tip -->
+        <div class="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-900/30 text-indigo-950 dark:text-indigo-200 border border-indigo-100 dark:border-indigo-800 leading-relaxed text-[11px]">
+          🔒 <strong>Privacy Assurance:</strong> Works offline via OCR & regex, or directly with your own Gemini API key. No data is stored on any remote server.
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
           <button type="button" id="cancel-smart-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
-          <button type="button" id="smart-parse-submit-btn" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+          <button type="button" id="smart-parse-submit-btn" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
             ⚡ Extract & Populate Form
           </button>
         </div>
       </div>
     </div>
   </div>
-</div>
 
   <!-- ======================================================== -->
   <!-- MODAL: Settings (Gemini Key, Backup, Privacy)            -->
   <!-- ======================================================== -->
-  <div id="settings-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
-      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex flex-col sm:p-4 sm:flex sm:items-center sm:justify-center overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+      
+      <!-- Sticky Header -->
+      <div class="sticky top-0 z-30 shrink-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between shadow-xs">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Settings & AI Configuration</h2>
-          <p class="text-xs text-slate-400">Configure your free AI key and manage local backups.</p>
+          <p class="text-[11px] text-slate-400">Configure your free AI key and manage local backups.</p>
         </div>
-        <button id="close-settings-modal-btn" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button id="close-settings-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
-      <form id="settings-form" class="mt-4 space-y-4 text-xs">
+      <!-- Scrollable Form -->
+      <form id="settings-form" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs overscroll-contain pb-20 sm:pb-6">
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="font-semibold text-slate-700 dark:text-slate-300">Free Gemini API Key (Bring Your Own Key)</label>
@@ -482,14 +491,13 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
-          <button type="submit" class="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+          <button type="submit" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
             Save Settings
           </button>
         </div>
       </form>
     </div>
   </div>
-</div>
 
   <!-- Client-Side OCR Engine (Free, Offline fallback) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>

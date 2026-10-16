@@ -24,19 +24,19 @@ const AI = {
     };
   },
 
-  // 1. Multimodal or Text Extraction with Gemini / Chrome AI / Local OCR
+  // 1. Multimodal or Text Extraction with Gemini / Chrome AI / Local OCR / Cloud OCR
   async extractEventDetails({ text = '', imageBase64 = null, mimeType = 'image/png' }, onProgress = null) {
     const caps = await this.getCapabilities();
 
     // Strategy 1: Gemini Multimodal Vision API (if API key is present)
     if (caps.hasGeminiKey) {
       try {
-        if (onProgress) onProgress('🤖 Analyzing screenshot with Gemini Multimodal AI...');
+        if (onProgress) onProgress('🤖 Analyzing with Gemini Multimodal Vision...');
         return await this.extractWithGemini({ text, imageBase64, mimeType });
       } catch (err) {
         console.warn('Gemini vision API failed, falling back to local OCR:', err);
         if (typeof UI !== 'undefined' && UI.showToast) {
-          UI.showToast(`Gemini note: ${err.message}. Using built-in OCR fallback...`);
+          UI.showToast(`Gemini note: ${err.message}. Trying built-in OCR...`);
         }
       }
     }
@@ -44,9 +44,16 @@ const AI = {
     // Strategy 2: Client-side High-Accuracy OCR (Tesseract.js)
     if (imageBase64 && typeof Tesseract !== 'undefined') {
       try {
-        if (onProgress) onProgress('👁️ Scanning text with built-in OCR...');
+        if (onProgress) onProgress('👁️ Initializing built-in OCR...');
         const imageSrc = `data:${mimeType};base64,${imageBase64}`;
-        const ocrResult = await Tesseract.recognize(imageSrc, 'eng');
+        const ocrResult = await Tesseract.recognize(imageSrc, 'eng', {
+          logger: m => {
+            if (onProgress && m.status) {
+              const pct = typeof m.progress === 'number' ? ` (${Math.round(m.progress * 100)}%)` : '';
+              onProgress(`👁️ ${m.status}${pct}`);
+            }
+          }
+        });
         const ocrText = (ocrResult.data && ocrResult.data.text) ? ocrResult.data.text : '';
         if (ocrText && ocrText.trim().length > 5) {
           const combined = text ? `${text}\n\n${ocrText}` : ocrText;
@@ -60,11 +67,37 @@ const AI = {
           return Parser.parse(combined);
         }
       } catch (ocrErr) {
-        console.warn('Local OCR failed:', ocrErr);
+        console.warn('Local OCR failed, trying cloud fallback:', ocrErr);
       }
     }
 
-    // Strategy 3: Chrome On-Device AI (text only)
+    // Strategy 3: Fast Cloud OCR fallback (free tier)
+    if (imageBase64) {
+      try {
+        if (onProgress) onProgress('🌐 Trying Cloud OCR engine...');
+        const formData = new FormData();
+        formData.append('base64Image', `data:${mimeType};base64,${imageBase64}`);
+        formData.append('apikey', 'helloworld');
+        formData.append('language', 'eng');
+        formData.append('OCREngine', '2');
+        const ocrRes = await fetch('https://api.ocr.space/parse/image', {
+          method: 'POST',
+          body: formData
+        });
+        if (ocrRes.ok) {
+          const json = await ocrRes.json();
+          const parsed = json.ParsedResults?.[0]?.ParsedText;
+          if (parsed && parsed.trim().length > 5) {
+            const combined = text ? `${text}\n\n${parsed}` : parsed;
+            return Parser.parse(combined);
+          }
+        }
+      } catch (cloudErr) {
+        console.warn('Cloud OCR unavailable:', cloudErr);
+      }
+    }
+
+    // Strategy 4: Chrome On-Device AI (text only)
     if (caps.hasChromeAi && text) {
       try {
         return await this.extractWithChromeAi(text);
@@ -73,8 +106,17 @@ const AI = {
       }
     }
 
-    // Strategy 4: Offline heuristic parser
-    return Parser.parse(text);
+    // Strategy 5: Offline heuristic parser
+    if (text && text.trim().length > 0) {
+      return Parser.parse(text);
+    }
+
+    // If only an image was submitted and no engine was able to extract text:
+    const emptyResult = Parser.parse('');
+    if (imageBase64) {
+      emptyResult._noTextDetected = true;
+    }
+    return emptyResult;
   },
 
   async extractWithGemini({ text, imageBase64, mimeType }) {

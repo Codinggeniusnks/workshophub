@@ -223,6 +223,24 @@ const DriveSync = {
     });
     if (!res.ok) throw new Error(`Drive read failed: ${res.status}`);
     const data = await res.json();
+
+    // Auto-sync settings if remote contains settings and local has missing fields
+    if (data && data.settings && typeof Store !== 'undefined') {
+      try {
+        const localApiKey = Store.getSetting('geminiApiKey');
+        if (!localApiKey && data.settings.geminiApiKey) {
+          Store.saveSettings({
+            geminiApiKey: data.settings.geminiApiKey,
+            aiModel: data.settings.aiModel || 'gemini-2.0-flash',
+            userTimezone: data.settings.userTimezone || 'UTC'
+          });
+          console.log('Restored Gemini settings from Google Drive cloud sync.');
+        }
+      } catch (e) {
+        console.warn('Failed restoring settings from drive file:', e);
+      }
+    }
+
     return Array.isArray(data) ? data : (data.events || []);
   },
 
@@ -237,10 +255,19 @@ const DriveSync = {
     const delimiter = "\r\n--" + boundary + "\r\n";
     const closeDelimiter = "\r\n--" + boundary + "--";
 
+    const localApiKey = (typeof Store !== 'undefined') ? Store.getSetting('geminiApiKey') : '';
+    const localModel = (typeof Store !== 'undefined') ? Store.getSetting('aiModel') : '';
+    const localTz = (typeof Store !== 'undefined') ? Store.getSetting('userTimezone') : '';
+
     const payload = JSON.stringify({
-      version: '2.0',
+      version: '2.1',
       syncedAt: new Date().toISOString(),
-      events: events
+      events: events,
+      settings: {
+        geminiApiKey: localApiKey || '',
+        aiModel: localModel || 'gemini-2.0-flash',
+        userTimezone: localTz || 'UTC'
+      }
     }, null, 2);
 
     const body = delimiter +
@@ -264,10 +291,19 @@ const DriveSync = {
   },
 
   async updateDriveFile(fileId, events) {
+    const localApiKey = (typeof Store !== 'undefined') ? Store.getSetting('geminiApiKey') : '';
+    const localModel = (typeof Store !== 'undefined') ? Store.getSetting('aiModel') : '';
+    const localTz = (typeof Store !== 'undefined') ? Store.getSetting('userTimezone') : '';
+
     const payload = JSON.stringify({
-      version: '2.0',
+      version: '2.1',
       syncedAt: new Date().toISOString(),
-      events: events
+      events: events,
+      settings: {
+        geminiApiKey: localApiKey || '',
+        aiModel: localModel || 'gemini-2.0-flash',
+        userTimezone: localTz || 'UTC'
+      }
     }, null, 2);
 
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
