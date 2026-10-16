@@ -91,26 +91,57 @@ document.addEventListener('DOMContentLoaded', () => {
   let stagedImageBase64 = null;
   let stagedImageMime = 'image/png';
 
+  function stageImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    stagedImageMime = file.type || 'image/png';
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const fullDataUrl = evt.target.result;
+      stagedImageBase64 = fullDataUrl.split(',')[1];
+      const preview = document.getElementById('smart-image-preview');
+      const container = document.getElementById('smart-image-preview-container');
+      if (preview && container) {
+        preview.src = fullDataUrl;
+        container.classList.remove('hidden');
+      }
+      UI.openSmartParseModal();
+      UI.showToast('📸 Screenshot loaded! Tap Extract to auto-fill.');
+    };
+    reader.readAsDataURL(file);
+  }
+  window.stageImageFile = stageImageFile;
+
   const imageInput = document.getElementById('smart-parse-image-input');
   imageInput?.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
-      stagedImageMime = file.type || 'image/png';
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        // Strip data:image/...;base64, header
-        const fullDataUrl = evt.target.result;
-        stagedImageBase64 = fullDataUrl.split(',')[1];
-        
-        // Preview
-        const preview = document.getElementById('smart-image-preview');
-        const container = document.getElementById('smart-image-preview-container');
-        if (preview && container) {
-          preview.src = fullDataUrl;
-          container.classList.remove('hidden');
+    if (file) stageImageFile(file);
+  });
+
+  // Global Clipboard Paste Support (Ctrl+V / Paste screenshot anywhere)
+  window.addEventListener('paste', (e) => {
+    const items = (e.clipboardData || window.clipboardData)?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          stageImageFile(file);
+          break;
         }
-      };
-      reader.readAsDataURL(file);
+      }
+    }
+  });
+
+  // Drag & Drop Screenshot Support
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        stageImageFile(file);
+      }
     }
   });
 

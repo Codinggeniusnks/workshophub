@@ -3,7 +3,7 @@
  * Enables offline caching, offline app launches, and PWA installation.
  */
 
-const CACHE_NAME = 'workshophub-cache-v2';
+const CACHE_NAME = 'workshophub-cache-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './js/store.js',
   './js/parser.js',
   './js/ai.js',
+  './js/driveSync.js',
   './js/organiser.js',
   './js/calendar.js',
   './js/ui.js',
@@ -38,7 +39,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== 'workshophub-shared-files') {
             return caches.delete(key);
           }
         })
@@ -49,6 +50,29 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Web Share Target Level 2: Intercept POST with shared image file
+  if (event.request.method === 'POST') {
+    event.respondWith(
+      (async () => {
+        try {
+          const formData = await event.request.formData();
+          const file = formData.get('shared_file');
+          if (file) {
+            const cache = await caches.open('workshophub-shared-files');
+            await cache.put('last-shared-image', new Response(file, {
+              headers: { 'Content-Type': file.type || 'image/png' }
+            }));
+            return Response.redirect('./index.html?shared_image=1', 303);
+          }
+        } catch (e) {
+          console.warn('Share target POST handling error:', e);
+        }
+        return Response.redirect('./index.html', 303);
+      })()
+    );
+    return;
+  }
 
   // Never cache external Google AI API requests
   if (url.hostname.includes('googleapis.com')) {

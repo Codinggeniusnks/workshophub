@@ -776,17 +776,34 @@ const UI = {
     `;
   },
 
-  // Android Web Share Target handler
+  // Web Share Target handler (Text & Shared Screenshot Files)
   checkSharedTargetUrl() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const sharedText = params.get('share_text') || params.get('share_title') || params.get('share_url');
     if (sharedText) {
-      // Clear URL query parameters
       window.history.replaceState({}, document.title, window.location.pathname);
       this.openSmartParseModal();
       const input = document.getElementById('smart-parse-text-input');
       if (input) input.value = sharedText;
+    }
+
+    if (params.get('shared_image') === '1') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      if ('caches' in window) {
+        caches.open('workshophub-shared-files').then(cache => {
+          cache.match('last-shared-image').then(res => {
+            if (res) {
+              res.blob().then(blob => {
+                const file = new File([blob], 'shared_screenshot.png', { type: blob.type || 'image/png' });
+                if (window.stageImageFile) {
+                  window.stageImageFile(file);
+                }
+              });
+            }
+          });
+        });
+      }
     }
   }
 };
