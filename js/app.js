@@ -162,28 +162,15 @@ document.addEventListener('DOMContentLoaded', () => {
         text: textInput,
         imageBase64: stagedImageBase64,
         mimeType: stagedImageMime
+      }, (status) => {
+        submitBtn.innerHTML = status;
       });
 
       // Populate into Event Modal
       UI.closeSmartParseModal();
-      UI.openEventModal();
+      UI.openEventModal(extracted);
 
-      if (extracted.title) document.getElementById('form-title').value = extracted.title;
-      if (extracted.organizer) document.getElementById('form-organizer').value = extracted.organizer;
-      if (extracted.category) document.getElementById('form-category').value = extracted.category;
-      if (extracted.mode) document.getElementById('form-mode').value = extracted.mode;
-      if (extracted.date) document.getElementById('form-date').value = extracted.date;
-      if (extracted.startTime) document.getElementById('form-start-time').value = extracted.startTime;
-      if (extracted.endTime) document.getElementById('form-end-time').value = extracted.endTime;
-      if (extracted.venue) document.getElementById('form-venue').value = extracted.venue;
-      if (extracted.meetingLink) document.getElementById('form-meeting-link').value = extracted.meetingLink;
-      if (extracted.passcode) document.getElementById('form-passcode').value = extracted.passcode;
-      if (extracted.description) document.getElementById('form-description').value = extracted.description;
-      if (extracted.formLink) document.getElementById('form-form-link').value = extracted.formLink;
-      if (extracted.materialsLink) document.getElementById('form-materials-link').value = extracted.materialsLink;
-      if (extracted.notes) document.getElementById('form-notes').value = extracted.notes;
-
-      UI.showToast('Details extracted & pre-filled! Review and click Save.');
+      UI.showToast('✨ Details extracted & pre-filled! Review and click Save.');
     } catch (err) {
       alert('Extraction failed: ' + err.message);
     } finally {

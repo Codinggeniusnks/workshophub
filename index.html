@@ -200,8 +200,9 @@
   <!-- ======================================================== -->
   <!-- MODAL: Insert / Edit Programme                           -->
   <!-- ======================================================== -->
-  <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+  <div id="event-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
+      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div>
           <h2 id="modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Insert New Programme / Workshop</h2>
@@ -317,12 +318,14 @@
       </form>
     </div>
   </div>
+</div>
 
   <!-- ======================================================== -->
   <!-- MODAL: Smart Ingest (Text + Screenshot OCR)              -->
   <!-- ======================================================== -->
-  <div id="smart-parse-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+  <div id="smart-parse-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
+      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -373,12 +376,14 @@
       </div>
     </div>
   </div>
+</div>
 
   <!-- ======================================================== -->
   <!-- MODAL: Settings (Gemini Key, Backup, Privacy)            -->
   <!-- ======================================================== -->
-  <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
+  <div id="settings-modal" class="fixed inset-0 z-50 p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="min-h-full flex items-start sm:items-center justify-center py-2 sm:py-8">
+      <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Settings & AI Configuration</h2>
@@ -484,6 +489,10 @@
       </form>
     </div>
   </div>
+</div>
+
+  <!-- Client-Side OCR Engine (Free, Offline fallback) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <!-- Scripts: Classic scripts for 100% offline & file:// compatibility -->
   <script src="js/safe.js"></script>

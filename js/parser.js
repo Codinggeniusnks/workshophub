@@ -51,7 +51,7 @@ const Parser = {
     if (!result.meetingLink) {
       const venueMatch = text.match(/(?:venue|location|address|held at|place)\s*[:=]\s*([^\n\r]+)/i);
       if (venueMatch) {
-        result.venue = venueMatch[1].trim();
+        result.venue = venueMatch[1].replace(/^[•\-\*\s]+/, '').trim();
         result.mode = 'in-person';
       }
     }
@@ -89,30 +89,56 @@ const Parser = {
       }
     }
 
-    // 5. Time extraction (ranges & single times)
-    const timeRangeMatch = text.match(/\b([0-1]?[0-9]|2[0-3]):([0-5][0-9])\s*(AM|PM)?\s*(?:-|–|to)\s*([0-1]?[0-9]|2[0-3]):([0-5][0-9])\s*(AM|PM)?\b/i);
+    // 5. Time extraction (ranges & single times, supporting : and . like 1.30 PM)
+    const timeRangeMatch = text.match(/\b([0-1]?[0-9]|2[0-3])[:.]([0-5][0-9])\s*(AM|PM)?\s*(?:-|–|—|to)\s*([0-1]?[0-9]|2[0-3])[:.]([0-5][0-9])\s*(AM|PM)?\b/i);
     if (timeRangeMatch) {
-      result.startTime = this.convertTo24h(timeRangeMatch[1], timeRangeMatch[2], timeRangeMatch[3] || timeRangeMatch[6]);
-      result.endTime = this.convertTo24h(timeRangeMatch[4], timeRangeMatch[5], timeRangeMatch[6]);
+      let firstAmpm = timeRangeMatch[3];
+      const secondAmpm = timeRangeMatch[6];
+      if (!firstAmpm && secondAmpm) {
+        const h1 = parseInt(timeRangeMatch[1], 10);
+        const h2 = parseInt(timeRangeMatch[4], 10);
+        if (secondAmpm.toUpperCase() === 'PM' && (h1 <= h2 || h1 < 12)) {
+          firstAmpm = (h1 >= 7 && h1 <= 11) ? 'AM' : 'PM';
+        }
+      }
+      result.startTime = this.convertTo24h(timeRangeMatch[1], timeRangeMatch[2], firstAmpm || secondAmpm);
+      result.endTime = this.convertTo24h(timeRangeMatch[4], timeRangeMatch[5], secondAmpm);
     } else {
-      const singleTime = text.match(/\b([0-1]?[0-9]|2[0-3]):([0-5][0-9])\s*(AM|PM)?\b/i);
+      const singleTime = text.match(/\b([0-1]?[0-9]|2[0-3])[:.]([0-5][0-9])\s*(AM|PM)?\b/i);
       if (singleTime) {
         result.startTime = this.convertTo24h(singleTime[1], singleTime[2], singleTime[3]);
       }
     }
 
-    // 6. Title heuristic
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-    for (const line of lines) {
-      // Exclude greeting lines, URLs, dates
-      if (!/^(dear|hi|hello|thank you|regards|sincerely|date|time|venue)/i.test(line) &&
-          !line.includes('http') && line.length < 100) {
-        result.title = line.replace(/^(workshop|event|programme|webinar|title)\s*[:\-]\s*/i, '');
-        break;
+    // 6. Organizer / Host extraction
+    const organizerMatch = text.match(/(?:partnership between|organized by|hosted by|presented by|organizer\s*[:=]|speaker\s*[:=])\s*([^\n\r.]+)/i);
+    if (organizerMatch) {
+      result.organizer = organizerMatch[1].replace(/^[•\-\*\s]+/, '').trim();
+    }
+
+    // 7. Title heuristic (Smart detection of Event Name)
+    const specificTitleMatch = text.match(/(?:attending|interest in|welcome to|register for|registered for)\s+([A-Za-z0-9\s\-]+?)(?:!|\.|\n|–|-|$)/i);
+    if (specificTitleMatch && specificTitleMatch[1].trim().length > 3) {
+      let t = specificTitleMatch[1].trim().replace(/^(?:attending|attending to|joining|registering for)\s+/i, '');
+      result.title = t;
+    } else {
+      const lines = text.split('\n').map(l => l.trim().replace(/^[•\-\*\s]+/, '')).filter(l => l.length > 3);
+      for (const line of lines) {
+        // Exclude greeting lines, URLs, dates
+        if (!/^(dear|hi|hello|thank you|regards|sincerely|date|time|venue|due to|please|note|important)/i.test(line) &&
+            !line.includes('http') && line.length < 90) {
+          result.title = line.replace(/^(workshop|event|programme|webinar|title)\s*[:\-]\s*/i, '');
+          break;
+        }
       }
     }
 
-    // 7. Auto categorize heuristic
+    // 8. Notes & Waitlist detection
+    if (/waitlist|not a confirmed ticket|does not guarantee/i.test(text)) {
+      result.notes = '⚠️ Waitlist registration (requires committee confirmation).';
+    }
+
+    // 9. Auto categorize heuristic
     result.category = this.detectCategory(text);
 
     return result;
@@ -131,7 +157,7 @@ const Parser = {
   detectCategory(text) {
     const lower = text.toLowerCase();
     if (lower.match(/\b(ai|llm|machine learning|deep learning|chatgpt|gemini|data science|nlp)\b/)) return 'AI & Data';
-    if (lower.match(/\b(web|javascript|react|vue|node|frontend|backend|api|fullstack|css|html)\b/)) return 'Web & Software';
+    if (lower.match(/\b(devfest|gdg|web|javascript|react|vue|node|frontend|backend|api|fullstack|css|html|software|coding)\b/)) return 'Web & Software';
     if (lower.match(/\b(cloud|docker|kubernetes|aws|devops|azure|gcp|ci\/cd|terraform)\b/)) return 'Cloud & DevOps';
     if (lower.match(/\b(career|resume|cv|interview|job|linkedin|soft skills|networking)\b/)) return 'Career & Professional';
     if (lower.match(/\b(ui|ux|figma|design|user experience|prototyping)\b/)) return 'Design & UI/UX';

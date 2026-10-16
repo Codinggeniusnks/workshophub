@@ -24,25 +24,47 @@ const AI = {
     };
   },
 
-  // 1. Multimodal or Text Extraction with Gemini / Chrome AI
-  async extractEventDetails({ text = '', imageBase64 = null, mimeType = 'image/png' }) {
+  // 1. Multimodal or Text Extraction with Gemini / Chrome AI / Local OCR
+  async extractEventDetails({ text = '', imageBase64 = null, mimeType = 'image/png' }, onProgress = null) {
     const caps = await this.getCapabilities();
 
-    // Strategy 1: Gemini API (Cloud, full multimodal, high accuracy)
+    // Strategy 1: Gemini Multimodal Vision API (if API key is present)
     if (caps.hasGeminiKey) {
       try {
+        if (onProgress) onProgress('🤖 Analyzing screenshot with Gemini Multimodal AI...');
         return await this.extractWithGemini({ text, imageBase64, mimeType });
       } catch (err) {
-        console.warn('Gemini API extraction failed, attempting fallbacks:', err);
-        // If it was text-only and Gemini failed, try Chrome AI or offline parser
-        if (!imageBase64 && caps.hasChromeAi) {
-          return await this.extractWithChromeAi(text);
+        console.warn('Gemini vision API failed, falling back to local OCR:', err);
+        if (typeof UI !== 'undefined' && UI.showToast) {
+          UI.showToast(`Gemini note: ${err.message}. Using built-in OCR fallback...`);
         }
-        return Parser.parse(text);
       }
     }
 
-    // Strategy 2: Chrome On-Device AI (text only)
+    // Strategy 2: Client-side High-Accuracy OCR (Tesseract.js)
+    if (imageBase64 && typeof Tesseract !== 'undefined') {
+      try {
+        if (onProgress) onProgress('👁️ Scanning text with built-in OCR...');
+        const imageSrc = `data:${mimeType};base64,${imageBase64}`;
+        const ocrResult = await Tesseract.recognize(imageSrc, 'eng');
+        const ocrText = (ocrResult.data && ocrResult.data.text) ? ocrResult.data.text : '';
+        if (ocrText && ocrText.trim().length > 5) {
+          const combined = text ? `${text}\n\n${ocrText}` : ocrText;
+          if (caps.hasChromeAi) {
+            try {
+              return await this.extractWithChromeAi(combined);
+            } catch (e) {
+              console.warn('Chrome AI fallback failed:', e);
+            }
+          }
+          return Parser.parse(combined);
+        }
+      } catch (ocrErr) {
+        console.warn('Local OCR failed:', ocrErr);
+      }
+    }
+
+    // Strategy 3: Chrome On-Device AI (text only)
     if (caps.hasChromeAi && text) {
       try {
         return await this.extractWithChromeAi(text);
@@ -51,7 +73,7 @@ const AI = {
       }
     }
 
-    // Strategy 3: Offline heuristic parser
+    // Strategy 4: Offline heuristic parser
     return Parser.parse(text);
   },
 
@@ -60,22 +82,22 @@ const AI = {
     const model = Store.getSetting('aiModel') || 'gemini-2.0-flash';
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    const userTz = Store.getSetting('userTimezone');
+    const userTz = Store.getSetting('userTimezone') || 'UTC';
 
     const promptText = `
 You are an intelligent calendar and workshop assistant.
-Analyze the following event announcement, confirmation email, or registration receipt.
+Analyze the following event announcement, confirmation email, poster flyer, or registration receipt.
 Current date reference: ${todayStr} (Timezone: ${userTz}).
 Extract structured workshop/programme details. Return ONLY valid JSON adhering strictly to this schema:
 
 {
-  "title": "Clear workshop name",
+  "title": "Clear workshop or event name",
   "organizer": "Host organization or speaker name",
   "category": "One of: AI & Data, Web & Software, Career & Professional, Cloud & DevOps, Design & UI/UX, Academic & Research, Other",
   "mode": "online or in-person",
   "date": "YYYY-MM-DD (must be 4-digit year, 2-digit month, 2-digit day)",
-  "startTime": "HH:MM in 24-hour format (e.g. 14:00, 09:30)",
-  "endTime": "HH:MM in 24-hour format (e.g. 16:30, 12:00)",
+  "startTime": "HH:MM in 24-hour format (e.g. 13:30, 09:30)",
+  "endTime": "HH:MM in 24-hour format (e.g. 17:00, 12:00)",
   "venue": "Meeting platform name (Google Meet / Zoom / MS Teams) OR physical room / building address",
   "meetingLink": "URL to join if online (e.g. meet.google.com/..., zoom.us/j/...), or empty string",
   "passcode": "Meeting password/PIN if present, or empty string",
@@ -93,18 +115,17 @@ Extract structured workshop/programme details. Return ONLY valid JSON adhering s
     if (imageBase64) {
       parts.push({
         inline_data: {
-          mime_type: mimeType,
+          mime_type: mimeType || 'image/png',
           data: imageBase64
         }
       });
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey // Secure header: not in URL query string
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: parts }],
@@ -117,7 +138,12 @@ Extract structured workshop/programme details. Return ONLY valid JSON adhering s
 
     if (!response.ok) {
       const errBody = await response.text();
-      throw new Error(`Gemini API error (${response.status}): ${errBody}`);
+      let msg = `Gemini API error (${response.status})`;
+      try {
+        const parsedErr = JSON.parse(errBody);
+        if (parsedErr.error?.message) msg = parsedErr.error.message;
+      } catch (e) {}
+      throw new Error(msg);
     }
 
     const data = await response.json();

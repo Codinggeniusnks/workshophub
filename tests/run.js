@@ -77,6 +77,28 @@ test('Parser extracts Zoom with Passcode and 12-hour format', () => {
   assert.strictEqual(parsed.category, 'Web & Software');
 });
 
+test('Parser extracts Google Form Waitlist receipt with dot times and physical venue', () => {
+  const sampleForm = `
+    Welcome! Thank you for your interest in attending Road To DevFest KL 2026!
+    Road To DevFest KL is a collaborative partnership between GDG Kuala Lumpur and GDG On Campus UM.
+    Due to venue capacity limits, this interest form serves as a WAITLIST REGISTRATION.
+    Event Details:
+    • Date: 31st October 2026 (Saturday)
+    • Time: 1.30 PM – 5:00 PM
+    • Venue: Dewan Kuliah 1 (DK1), Faculty of Computer Science and Information Technology (FCSIT), Universiti Malaya
+  `;
+  const parsed = Parser.parse(sampleForm);
+  assert.strictEqual(parsed.title, 'Road To DevFest KL 2026');
+  assert.strictEqual(parsed.organizer, 'GDG Kuala Lumpur and GDG On Campus UM');
+  assert.strictEqual(parsed.date, '2026-10-31');
+  assert.strictEqual(parsed.startTime, '13:30');
+  assert.strictEqual(parsed.endTime, '17:00');
+  assert.strictEqual(parsed.mode, 'in-person');
+  assert.strictEqual(parsed.category, 'Web & Software');
+  assert.ok(parsed.venue.includes('Dewan Kuliah 1'));
+  assert.ok(parsed.notes.includes('Waitlist'));
+});
+
 // 3. Organiser Test
 test('Organiser detects schedule time clashes on same day', () => {
   const events = [

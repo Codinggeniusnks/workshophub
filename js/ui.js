@@ -560,7 +560,7 @@ const UI = {
   },
 
   // 10. Modals: Insert / Edit Event
-  openEventModal(eventId = null) {
+  openEventModal(eventIdOrData = null) {
     const modal = document.getElementById('event-modal');
     const form = document.getElementById('event-form');
     if (!modal || !form) return;
@@ -568,27 +568,13 @@ const UI = {
     form.reset();
     document.getElementById('form-id').value = '';
 
-    if (eventId) {
-      const event = this.activeEvents.find(e => e.id === eventId);
+    if (typeof eventIdOrData === 'string') {
+      const event = this.activeEvents.find(e => e.id === eventIdOrData);
       if (event) {
-        document.getElementById('modal-title').textContent = 'Edit Programme Details';
-        document.getElementById('form-id').value = event.id;
-        document.getElementById('form-title').value = event.title || '';
-        document.getElementById('form-organizer').value = event.organizer || '';
-        document.getElementById('form-category').value = event.category || 'AI & Data';
-        document.getElementById('form-mode').value = event.mode || 'online';
-        document.getElementById('form-date').value = event.date || '';
-        document.getElementById('form-start-time').value = event.startTime || '';
-        document.getElementById('form-end-time').value = event.endTime || '';
-        document.getElementById('form-venue').value = event.venue || '';
-        document.getElementById('form-meeting-link').value = event.meetingLink || '';
-        document.getElementById('form-passcode').value = event.passcode || '';
-        document.getElementById('form-description').value = event.description || '';
-        document.getElementById('form-form-link').value = event.formLink || '';
-        document.getElementById('form-materials-link').value = event.materialsLink || '';
-        document.getElementById('form-notes').value = event.notes || '';
-        document.getElementById('form-status').value = event.status || 'registered';
+        this.populateEventForm(event, 'Edit Programme Details');
       }
+    } else if (typeof eventIdOrData === 'object' && eventIdOrData !== null) {
+      this.populateEventForm(eventIdOrData, 'Insert New Programme / Workshop');
     } else {
       document.getElementById('modal-title').textContent = 'Insert New Programme / Workshop';
       document.getElementById('form-date').value = Store.getRelativeDate(1);
@@ -597,6 +583,30 @@ const UI = {
     }
 
     modal.classList.remove('hidden');
+    // Scroll container to top so mobile screens always show the Title field
+    modal.scrollTop = 0;
+    const inner = modal.querySelector('.min-h-full');
+    if (inner) inner.scrollTop = 0;
+  },
+
+  populateEventForm(event, modalTitle) {
+    document.getElementById('modal-title').textContent = modalTitle;
+    document.getElementById('form-id').value = event.id || '';
+    document.getElementById('form-title').value = event.title || '';
+    document.getElementById('form-organizer').value = event.organizer || '';
+    document.getElementById('form-category').value = event.category || 'Web & Software';
+    document.getElementById('form-mode').value = event.mode || 'in-person';
+    document.getElementById('form-date').value = event.date || Store.getRelativeDate(1);
+    document.getElementById('form-start-time').value = event.startTime || '10:00';
+    document.getElementById('form-end-time').value = event.endTime || '12:00';
+    document.getElementById('form-venue').value = event.venue || '';
+    document.getElementById('form-meeting-link').value = event.meetingLink || '';
+    document.getElementById('form-passcode').value = event.passcode || '';
+    document.getElementById('form-description').value = event.description || '';
+    document.getElementById('form-form-link').value = event.formLink || '';
+    document.getElementById('form-materials-link').value = event.materialsLink || '';
+    document.getElementById('form-notes').value = event.notes || '';
+    document.getElementById('form-status').value = event.status || 'registered';
   },
 
   closeEventModal() {
