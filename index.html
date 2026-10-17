@@ -209,7 +209,7 @@
           <h2 id="modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Insert New Programme / Workshop</h2>
           <p class="text-[11px] text-slate-400 hidden sm:block">Allocate details so you never forget where or when it is held.</p>
         </div>
-        <button id="close-event-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
+        <button id="close-event-modal-btn" data-action="close-event" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
       <!-- Scrollable Form Body -->
@@ -314,7 +314,7 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
-          <button type="button" id="cancel-event-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
+          <button type="button" id="cancel-event-modal-btn" data-action="close-event" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
           <button type="submit" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
@@ -340,7 +340,7 @@
           </h2>
           <p class="text-[11px] text-slate-400">Paste text or upload a flyer / screenshot to extract details automatically.</p>
         </div>
-        <button id="close-smart-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
+        <button id="close-smart-modal-btn" data-action="close-smart-parse" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
       <!-- Scrollable Body -->
@@ -374,7 +374,7 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-          <button type="button" id="cancel-smart-modal-btn" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
+          <button type="button" id="cancel-smart-modal-btn" data-action="close-smart-parse" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
             Cancel
           </button>
           <button type="button" id="smart-parse-submit-btn" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
@@ -397,7 +397,7 @@
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Settings & AI Configuration</h2>
           <p class="text-[11px] text-slate-400">Configure your free AI key and manage local backups.</p>
         </div>
-        <button id="close-settings-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
+        <button id="close-settings-modal-btn" data-action="close-settings" type="button" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
       </div>
 
       <!-- Scrollable Form -->
@@ -491,6 +491,9 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+          <button type="button" id="cancel-settings-modal-btn" data-action="close-settings" class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
+            Cancel
+          </button>
           <button type="submit" class="px-5 py-2.5 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
             Save Settings
           </button>

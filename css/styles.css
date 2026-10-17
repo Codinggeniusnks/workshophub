@@ -57,7 +57,11 @@ body {
     opacity: 0.85;
     transform: scale(1.04);
   }
-}
 .pulse-badge {
   animation: subtle-pulse 2s infinite ease-in-out;
+}
+
+/* Crucial: Ensure hidden elements are NEVER overridden by media queries (e.g. sm:flex) */
+.hidden {
+  display: none !important;
 }

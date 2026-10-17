@@ -526,6 +526,20 @@ const UI = {
             DriveSync.sync().then(() => UI.showToast('Google Drive synced!'));
           }
           break;
+        case 'close-settings':
+          this.closeSettingsModal();
+          break;
+        case 'close-event':
+          this.closeEventModal();
+          break;
+        case 'close-smart-parse':
+          this.closeSmartParseModal();
+          break;
+        case 'close-modal':
+          this.closeEventModal();
+          this.closeSmartParseModal();
+          this.closeSettingsModal();
+          break;
       }
     });
 
@@ -583,6 +597,7 @@ const UI = {
     }
 
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
     document.body.classList.add('overflow-hidden');
     form.scrollTop = 0;
 
@@ -616,7 +631,11 @@ const UI = {
   },
 
   closeEventModal() {
-    document.getElementById('event-modal')?.classList.add('hidden');
+    const modal = document.getElementById('event-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
     document.body.classList.remove('overflow-hidden');
   },
 
@@ -628,11 +647,16 @@ const UI = {
     document.getElementById('smart-parse-image-input').value = '';
     document.getElementById('smart-image-preview-container').classList.add('hidden');
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
     document.body.classList.add('overflow-hidden');
   },
 
   closeSmartParseModal() {
-    document.getElementById('smart-parse-modal')?.classList.add('hidden');
+    const modal = document.getElementById('smart-parse-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
     document.body.classList.remove('overflow-hidden');
   },
 
@@ -662,11 +686,16 @@ const UI = {
     }
 
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
     document.body.classList.add('overflow-hidden');
   },
 
   closeSettingsModal() {
-    document.getElementById('settings-modal')?.classList.add('hidden');
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
     document.body.classList.remove('overflow-hidden');
   },
 

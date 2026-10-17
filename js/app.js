@@ -40,12 +40,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 4. Modal Close Buttons
+  // 4. Modal Close Buttons & Dismissals
   document.getElementById('close-event-modal-btn')?.addEventListener('click', () => UI.closeEventModal());
   document.getElementById('cancel-event-modal-btn')?.addEventListener('click', () => UI.closeEventModal());
   document.getElementById('close-smart-modal-btn')?.addEventListener('click', () => UI.closeSmartParseModal());
   document.getElementById('cancel-smart-modal-btn')?.addEventListener('click', () => UI.closeSmartParseModal());
   document.getElementById('close-settings-modal-btn')?.addEventListener('click', () => UI.closeSettingsModal());
+  document.getElementById('cancel-settings-modal-btn')?.addEventListener('click', () => UI.closeSettingsModal());
+
+  // Click outside (backdrop click) to dismiss modal
+  ['event-modal', 'smart-parse-modal', 'settings-modal'].forEach((modalId) => {
+    const modalEl = document.getElementById(modalId);
+    if (!modalEl) return;
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) {
+        if (modalId === 'event-modal') UI.closeEventModal();
+        else if (modalId === 'smart-parse-modal') UI.closeSmartParseModal();
+        else if (modalId === 'settings-modal') UI.closeSettingsModal();
+      }
+    });
+  });
+
+  // ESC key to dismiss any open modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      UI.closeEventModal();
+      UI.closeSmartParseModal();
+      UI.closeSettingsModal();
+    }
+  });
 
   // 5. Insert / Edit Form Submit
   document.getElementById('event-form')?.addEventListener('submit', (e) => {

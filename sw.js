@@ -3,7 +3,7 @@
  * Enables offline caching, offline app launches, and PWA installation.
  */
 
-const CACHE_NAME = 'workshophub-cache-v6';
+const CACHE_NAME = 'workshophub-cache-v7';
 const STATIC_ASSETS = [
   './',
   './index.html',
