@@ -457,9 +457,13 @@ const UI = {
       `;
     } catch (err) {
       document.getElementById('ai-loading-indicator')?.remove();
+      const fallback = (typeof AI !== 'undefined' && AI.offlineScheduleSearch)
+        ? AI.offlineScheduleSearch(text, this.activeEvents)
+        : '';
       messages.innerHTML += `
-        <div class="text-left text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">
-          ❌ Failed to get response: ${Safe.escapeHtml(err.message)}
+        <div class="text-left bg-red-50 dark:bg-red-950/40 p-3 rounded-2xl border border-red-200 dark:border-red-800 space-y-2 max-w-[90%]">
+          <div class="text-red-600 dark:text-red-400 text-sm font-medium">⚠️ Notice: ${Safe.escapeHtml(err.message)}</div>
+          ${fallback ? `<div class="text-slate-800 dark:text-slate-200 pt-2 border-t border-red-200 dark:border-red-800 whitespace-pre-line text-sm leading-relaxed">${Safe.escapeHtml(fallback)}</div>` : ''}
         </div>
       `;
     }

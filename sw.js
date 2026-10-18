@@ -3,7 +3,7 @@
  * Enables offline caching, offline app launches, and PWA installation.
  */
 
-const CACHE_NAME = 'workshophub-cache-v7';
+const CACHE_NAME = 'workshophub-cache-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -51,31 +51,39 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Web Share Target Level 2: Intercept POST with shared image file
-  if (event.request.method === 'POST') {
-    event.respondWith(
-      (async () => {
-        try {
-          const formData = await event.request.formData();
-          const file = formData.get('shared_file');
-          if (file) {
-            const cache = await caches.open('workshophub-shared-files');
-            await cache.put('last-shared-image', new Response(file, {
-              headers: { 'Content-Type': file.type || 'image/png' }
-            }));
-            return Response.redirect('./index.html?shared_image=1', 303);
-          }
-        } catch (e) {
-          console.warn('Share target POST handling error:', e);
-        }
-        return Response.redirect('./index.html', 303);
-      })()
-    );
+  // 1. NEVER intercept any external/cross-origin requests (e.g. Google Generative AI, Google Drive, CDNs)
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Never cache external Google AI API requests
-  if (url.hostname.includes('googleapis.com')) {
+  // 2. Web Share Target Level 2: ONLY intercept POST for incoming share target image submissions
+  if (event.request.method === 'POST') {
+    const isShareTarget = (url.pathname.endsWith('/index.html') || url.pathname.endsWith('/') || url.searchParams.has('shared_image')) &&
+      (event.request.headers.get('content-type') || '').includes('multipart/form-data');
+
+    if (isShareTarget) {
+      event.respondWith(
+        (async () => {
+          try {
+            const formData = await event.request.formData();
+            const file = formData.get('shared_file');
+            if (file) {
+              const cache = await caches.open('workshophub-shared-files');
+              await cache.put('last-shared-image', new Response(file, {
+                headers: { 'Content-Type': file.type || 'image/png' }
+              }));
+              return Response.redirect('./index.html?shared_image=1', 303);
+            }
+          } catch (e) {
+            console.warn('Share target POST handling error:', e);
+          }
+          return Response.redirect('./index.html', 303);
+        })()
+      );
+      return;
+    }
+
+    // Pass through any other same-origin POST requests without redirecting
     return;
   }
 

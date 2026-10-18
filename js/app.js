@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Register Service Worker for PWA & offline support
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('Service Worker registered with scope:', reg.scope))
+      .then((reg) => {
+        console.log('Service Worker registered with scope:', reg.scope);
+        reg.update().catch(() => {});
+      })
       .catch((err) => console.warn('Service Worker registration skipped or failed:', err));
   }
 

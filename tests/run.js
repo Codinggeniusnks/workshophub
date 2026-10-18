@@ -9,6 +9,7 @@ const Parser = require('../js/parser.js');
 const Organiser = require('../js/organiser.js');
 const Calendar = require('../js/calendar.js');
 const DriveSync = require('../js/driveSync.js');
+const AI = require('../js/ai.js');
 
 let passed = 0;
 let failed = 0;
@@ -155,6 +156,56 @@ test('DriveSync.mergeEvents merges remote and local events by updatedAt without 
   assert.strictEqual(item1.title, 'Local newer');
   assert.ok(merged.find(x => x.id === '2'));
   assert.ok(merged.find(x => x.id === '3'));
+});
+
+// 6. AI Schedule Assistant & Offline Heuristics Test
+test('AI.offlineScheduleSearch handles preparation tips & required tools questions', () => {
+  const events = [
+    {
+      id: 'e1',
+      title: 'Docker Masterclass',
+      date: '2026-10-30',
+      startTime: '14:00',
+      mode: 'online',
+      meetingLink: 'https://meet.google.com/xyz-123',
+      passcode: 'docker2026',
+      checklist: ['Install Docker Desktop', 'Clone repo'],
+      materialsLink: 'https://github.com/example/docker-workshop',
+      notes: 'Have terminal open and ready.'
+    }
+  ];
+  const reply = AI.offlineScheduleSearch('Give me preparation tips and required tools for my upcoming sessions.', events);
+  assert.ok(reply.includes('Preparation & Tools'));
+  assert.ok(reply.includes('Docker Masterclass'));
+  assert.ok(reply.includes('Install Docker Desktop'));
+  assert.ok(reply.includes('https://meet.google.com/xyz-123'));
+  assert.ok(reply.includes('docker2026'));
+  assert.ok(reply.includes('https://github.com/example/docker-workshop'));
+});
+
+test('AI.offlineScheduleSearch answers "What workshop do I have this week"', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const events = [
+    { id: 'w1', title: 'Road To DevFest KL', date: today, startTime: '13:30', mode: 'in-person', venue: 'DK1' }
+  ];
+  const reply = AI.offlineScheduleSearch('What workshop do I have this week', events);
+  assert.ok(reply.includes('DevFest KL') || reply.includes('Workshops & Programmes'));
+});
+
+test('AI.offlineScheduleSearch detects schedule conflicts offline', () => {
+  const events = [
+    { id: '1', title: 'React Workshop', date: '2026-10-25', startTime: '10:00', endTime: '12:00' },
+    { id: '2', title: 'Vue Workshop', date: '2026-10-25', startTime: '11:00', endTime: '13:00' }
+  ];
+  const reply = AI.offlineScheduleSearch('Do I have any schedule conflicts or clashes?', events);
+  assert.ok(reply.includes('conflict'));
+  assert.ok(reply.includes('React Workshop'));
+  assert.ok(reply.includes('Vue Workshop'));
+});
+
+test('AI.offlineScheduleSearch handles empty schedules gracefully', () => {
+  const reply = AI.offlineScheduleSearch('Show me my workshops', []);
+  assert.ok(reply.includes("don't have any registered workshops"));
 });
 
 console.log(`\nResults: ${passed} passed, ${failed} failed.`);

@@ -7,7 +7,7 @@
 const AI = {
   // Check available AI engines
   async getCapabilities() {
-    const geminiKey = Store.getSetting('geminiApiKey');
+    const geminiKey = (typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('geminiApiKey') : '';
     let hasChromeAi = false;
     try {
       if (typeof window !== 'undefined' && (window.ai?.languageModel || window.ai?.assistant)) {
@@ -178,17 +178,22 @@ Extract structured workshop/programme details. Return ONLY valid JSON adhering s
       })
     });
 
+    const rawBody = await response.text();
+
     if (!response.ok) {
-      const errBody = await response.text();
       let msg = `Gemini API error (${response.status})`;
       try {
-        const parsedErr = JSON.parse(errBody);
+        const parsedErr = JSON.parse(rawBody);
         if (parsedErr.error?.message) msg = parsedErr.error.message;
       } catch (e) {}
       throw new Error(msg);
     }
 
-    const data = await response.json();
+    if (!rawBody.trim().startsWith('{')) {
+      throw new Error('Received unexpected non-JSON response from Gemini endpoint.');
+    }
+
+    const data = JSON.parse(rawBody);
     const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!candidateText) {
       throw new Error('Gemini returned an empty response.');
@@ -222,51 +227,76 @@ Extract structured workshop/programme details. Return ONLY valid JSON adhering s
   // 2. "Ask Your Schedule" Natural Language Querying
   async askSchedule(userQuery, events) {
     const caps = await this.getCapabilities();
-    const apiKey = Store.getSetting('geminiApiKey');
+    const apiKey = (typeof Store !== 'undefined' && Store.getSetting) ? (Store.getSetting('geminiApiKey') || '').trim() : '';
 
-    // Prepare a compact, sanitized view of the user's events
-    const sanitizedSchedule = events.map(e => ({
-      title: e.title,
-      organizer: e.organizer,
-      category: e.category,
-      mode: e.mode,
-      date: e.date,
-      startTime: e.startTime,
-      endTime: e.endTime,
-      venue: e.venue,
-      status: e.status,
-      description: e.description,
-      notes: e.notes
-    }));
+    if (caps.hasGeminiKey) {
+      try {
+        const model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-2.0-flash';
 
-    const systemPrompt = `You are a helpful workshop & programme schedule assistant.
+        // Prepare a compact, sanitized view of the user's events
+        const sanitizedSchedule = (events || []).map(e => ({
+          title: e.title,
+          organizer: e.organizer,
+          category: e.category,
+          mode: e.mode,
+          date: e.date,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          venue: e.venue,
+          meetingLink: e.meetingLink,
+          status: e.status,
+          description: e.description,
+          notes: e.notes,
+          checklist: e.checklist || []
+        }));
+
+        const systemPrompt = `You are a helpful workshop & programme schedule assistant.
 Current date: ${new Date().toISOString().split('T')[0]}.
 Here is the user's schedule of registered events (JSON format):
 ${JSON.stringify(sanitizedSchedule, null, 2)}
 
 User Question: "${userQuery}"
-Provide a clear, friendly, and concise response answering their question accurately based on the schedule above. If there are conflicts or missing details, highlight them politely.`;
+Provide a clear, friendly, and concise response answering their question accurately based on the schedule above. If they ask about preparation, tools, checklist, materials, or links, extract those specific details from their events. If there are conflicts or missing details, highlight them politely.`;
 
-    if (caps.hasGeminiKey) {
-      const model = Store.getSetting('aiModel') || 'gemini-2.0-flash';
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-          generationConfig: { temperature: 0.2 }
-        })
-      });
+        // Pass API key via query parameter (?key=...) to avoid CORS preflight failures on mobile devices
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+            generationConfig: { temperature: 0.2 }
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`Gemini error: ${response.status}`);
+        const rawText = await response.text();
+
+        if (!response.ok) {
+          let errorMsg = `Gemini API error (${response.status})`;
+          try {
+            const errObj = JSON.parse(rawText);
+            if (errObj.error?.message) errorMsg = errObj.error.message;
+          } catch (e) {}
+          throw new Error(errorMsg);
+        }
+
+        if (!rawText.trim().startsWith('{')) {
+          throw new Error('Received unexpected non-JSON response from server.');
+        }
+
+        const data = JSON.parse(rawText);
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (reply && reply.trim()) {
+          return reply.trim();
+        }
+        return 'No response generated from AI.';
+      } catch (geminiErr) {
+        console.warn('Gemini chat request failed, falling back to local schedule search:', geminiErr);
+        const offlineResult = this.offlineScheduleSearch(userQuery, events);
+        return `⚠️ Notice: Gemini API was unavailable (${geminiErr.message}).\n\n📱 Local schedule answer:\n\n${offlineResult}`;
       }
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
     }
 
     // Heuristic offline fallback if no API key
@@ -274,23 +304,174 @@ Provide a clear, friendly, and concise response answering their question accurat
   },
 
   offlineScheduleSearch(query, events) {
-    const q = query.toLowerCase();
-    const matches = events.filter(e =>
-      e.title.toLowerCase().includes(q) ||
-      (e.venue && e.venue.toLowerCase().includes(q)) ||
-      (e.category && e.category.toLowerCase().includes(q)) ||
-      (e.organizer && e.organizer.toLowerCase().includes(q))
-    );
-
-    if (matches.length === 0) {
-      return `(Offline Search) I couldn't find any events matching "${query}". Tip: Set your free Gemini API key in Settings for smart natural language queries!`;
+    if (!events || events.length === 0) {
+      return "You don't have any registered workshops or programmes yet.\n\nTip: Click '+ Add Programme' or paste an event poster screenshot in 'Quick Paste' to add your first session!";
     }
 
-    return `(Offline Search) Found ${matches.length} matching event(s):\n` +
-      matches.map(m => `• **${m.title}** on ${m.date} at ${m.startTime || 'TBD'} (${m.mode === 'online' ? 'Online' : m.venue || 'In-person'})`).join('\n');
+    const q = (query || '').toLowerCase().trim();
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Helper: calculate start and end of current week (Monday to Sunday)
+    const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday...
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const mondayStr = monday.toISOString().split('T')[0];
+    const sundayStr = sunday.toISOString().split('T')[0];
+
+    // Helper: format event for display
+    const formatEvent = (e) => {
+      const timeStr = e.startTime ? (e.endTime ? `${e.startTime} - ${e.endTime}` : e.startTime) : 'Time TBD';
+      const locStr = e.mode === 'online' ? (e.meetingLink ? `Online (${e.meetingLink})` : 'Online') : (e.venue || 'In-person');
+      let out = `• **${e.title}**\n  📅 Date: ${e.date} | ⏰ ${timeStr}\n  📍 Location: ${locStr}`;
+      if (e.organizer) out += `\n  👤 Organizer: ${e.organizer}`;
+      if (e.status && e.status !== 'confirmed') out += `\n  🏷️ Status: ${e.status.toUpperCase()}`;
+      return out;
+    };
+
+    // 1. Conflict / Overlap queries
+    if (q.includes('conflict') || q.includes('clash') || q.includes('overlap')) {
+      const org = (typeof Organiser !== 'undefined') ? Organiser : (typeof require !== 'undefined' ? require('./organiser.js') : null);
+      if (org && org.detectConflicts) {
+        const conflicts = org.detectConflicts(events);
+        const conflictKeys = Object.keys(conflicts);
+        if (conflictKeys.length === 0) {
+          return "✅ Great news! No schedule conflicts or time overlaps were detected in your registered programmes.";
+        }
+        let conflictMsg = `⚠️ Found ${conflictKeys.length} schedule conflict(s):\n\n`;
+        const reportedPairs = new Set();
+        conflictKeys.forEach(id => {
+          const ev = events.find(x => x.id === id);
+          if (!ev) return;
+          (conflicts[id] || []).forEach(clashEv => {
+            const pairKey = [ev.id, clashEv.id].sort().join('_');
+            if (!reportedPairs.has(pairKey)) {
+              reportedPairs.add(pairKey);
+              conflictMsg += `• **${ev.title}** (${ev.date} ${ev.startTime || ''}) clashes with **${clashEv.title}** (${clashEv.date} ${clashEv.startTime || ''})\n`;
+            }
+          });
+        });
+        return conflictMsg.trim();
+      }
+    }
+
+    // 2. Preparation, Checklist, Tools, Materials queries
+    const isPrepQuery = ['prep', 'tool', 'checklist', 'material', 'bring', 'equipment', 'require', 'link', 'passcode'].some(k => q.includes(k));
+    if (isPrepQuery) {
+      // Find upcoming events or all events
+      const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
+      const targetEvents = upcoming.length > 0 ? upcoming : events;
+
+      let prepMsg = `📋 **Preparation & Tools for Upcoming Sessions:**\n\n`;
+      let detailsFound = 0;
+
+      targetEvents.slice(0, 5).forEach(e => {
+        prepMsg += `• **${e.title}** (${e.date} at ${e.startTime || 'TBD'})\n`;
+        prepMsg += `  📍 Mode: ${e.mode === 'online' ? 'Online' : (e.venue || 'In-person')}\n`;
+
+        let hasItem = false;
+        if (e.meetingLink) {
+          prepMsg += `  🔗 Link: ${e.meetingLink}${e.passcode ? ` (Passcode: ${e.passcode})` : ''}\n`;
+          hasItem = true;
+        }
+        if (Array.isArray(e.checklist) && e.checklist.length > 0) {
+          prepMsg += `  ✅ Checklist / Tools:\n`;
+          e.checklist.forEach(item => { prepMsg += `     - ${item}\n`; });
+          hasItem = true;
+        }
+        if (e.materialsLink) {
+          prepMsg += `  📁 Materials: ${e.materialsLink}\n`;
+          hasItem = true;
+        }
+        if (e.notes) {
+          prepMsg += `  📝 Notes: ${e.notes}\n`;
+          hasItem = true;
+        }
+        if (!hasItem) {
+          prepMsg += `  ℹ️ No special equipment or notes recorded yet. Keep your confirmation email handy!\n`;
+        } else {
+          detailsFound++;
+        }
+        prepMsg += `\n`;
+      });
+
+      return prepMsg.trim();
+    }
+
+    // 3. Time-scoped queries: "this week"
+    if (q.includes('this week') || q.includes('week')) {
+      const thisWeekEvents = events.filter(e => e.date >= mondayStr && e.date <= sundayStr)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if (thisWeekEvents.length === 0) {
+        const nextEvent = events.filter(e => e.date > sundayStr).sort((a, b) => a.date.localeCompare(b.date))[0];
+        let reply = `📅 You have no workshops scheduled for this week (${mondayStr} to ${sundayStr}).`;
+        if (nextEvent) {
+          reply += `\n\nYour next upcoming session is:\n${formatEvent(nextEvent)}`;
+        }
+        return reply;
+      }
+      return `📅 **Workshops & Programmes This Week (${mondayStr} to ${sundayStr}):**\n\n` +
+        thisWeekEvents.map(formatEvent).join('\n\n');
+    }
+
+    // 4. "today"
+    if (q.includes('today')) {
+      const todayEvents = events.filter(e => e.date === todayStr);
+      if (todayEvents.length === 0) {
+        return `📅 You have no workshops scheduled for today (${todayStr}). Enjoy your day!`;
+      }
+      return `📅 **Workshops Scheduled for Today (${todayStr}):**\n\n` +
+        todayEvents.map(formatEvent).join('\n\n');
+    }
+
+    // 5. "tomorrow"
+    if (q.includes('tomorrow')) {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const tomorrowEvents = events.filter(e => e.date === tomorrowStr);
+      if (tomorrowEvents.length === 0) {
+        return `📅 You have no workshops scheduled for tomorrow (${tomorrowStr}).`;
+      }
+      return `📅 **Workshops Scheduled for Tomorrow (${tomorrowStr}):**\n\n` +
+        tomorrowEvents.map(formatEvent).join('\n\n');
+    }
+
+    // 6. "upcoming", "next", "what workshop", "sessions", "schedule", "all"
+    if (q.includes('upcoming') || q.includes('next') || q.includes('what workshop') || q.includes('sessions') || q.includes('schedule') || q.includes('all')) {
+      const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
+      const targetList = upcoming.length > 0 ? upcoming : events;
+      return `📅 **Your Registered Programme Schedule:**\n\n` +
+        targetList.slice(0, 7).map(formatEvent).join('\n\n') +
+        (targetList.length > 7 ? `\n\n... and ${targetList.length - 7} more session(s).` : '');
+    }
+
+    // 7. Keyword matching (filtering stopwords)
+    const stopWords = new Set(['what', 'which', 'when', 'where', 'how', 'give', 'me', 'the', 'a', 'an', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'is', 'are', 'my', 'do', 'i', 'have', 'any']);
+    const tokens = q.split(/\s+/).map(t => t.replace(/[^a-z0-9]/g, '')).filter(t => t.length > 2 && !stopWords.has(t));
+
+    const matches = events.filter(e => {
+      const haystack = `${e.title} ${e.organizer || ''} ${e.category || ''} ${e.venue || ''} ${e.description || ''} ${e.notes || ''}`.toLowerCase();
+      return tokens.some(tok => haystack.includes(tok));
+    });
+
+    if (matches.length > 0) {
+      return `🔍 Found ${matches.length} matching event(s) for your query:\n\n` +
+        matches.map(formatEvent).join('\n\n');
+    }
+
+    // Fallback: list upcoming events
+    const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
+    return `I couldn't find a direct match for "${query}".\n\nHere are your upcoming sessions:\n\n` +
+      (upcoming.length > 0 ? upcoming.slice(0, 5).map(formatEvent).join('\n\n') : events.slice(0, 5).map(formatEvent).join('\n\n')) +
+      `\n\n💡 Tip: You can configure your free Gemini API key in Settings for full conversational AI!`;
   },
 
   sanitizeExtractedEvent(data) {
+    const safeUrl = (u) => (typeof Safe !== 'undefined' && Safe.safeUrl) ? Safe.safeUrl(u) : ((typeof require !== 'undefined') ? require('./safe.js').safeUrl(u) : (u || ''));
     return {
       title: data.title || '',
       organizer: data.organizer || '',
@@ -300,11 +481,11 @@ Provide a clear, friendly, and concise response answering their question accurat
       startTime: data.startTime || '',
       endTime: data.endTime || '',
       venue: data.venue || '',
-      meetingLink: Safe.safeUrl(data.meetingLink || ''),
+      meetingLink: safeUrl(data.meetingLink || ''),
       passcode: data.passcode || '',
       description: data.description || '',
-      formLink: Safe.safeUrl(data.formLink || ''),
-      materialsLink: Safe.safeUrl(data.materialsLink || ''),
+      formLink: safeUrl(data.formLink || ''),
+      materialsLink: safeUrl(data.materialsLink || ''),
       notes: Array.isArray(data.checklist) ? data.checklist.join('; ') : (data.notes || ''),
       checklist: Array.isArray(data.checklist) ? data.checklist : []
     };
