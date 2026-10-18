@@ -258,8 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await AI.testApiKey(key);
       if (res.ok) {
-        statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
-        statusEl.textContent = '✅ ' + res.message + ' (Auto-saved & Activated!)';
+        if (res.isTemporaryBusy) {
+          statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800';
+          statusEl.textContent = '⚡ ' + res.message;
+        } else {
+          statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+          statusEl.textContent = '✅ ' + res.message + ' (Auto-saved & Activated!)';
+        }
         Store.saveSettings({
           geminiApiKey: key,
           aiModel: 'gemini-3.8-flash'

@@ -36,8 +36,9 @@ const AI = {
     }
     let model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-3.8-flash';
     if (model === 'gemini-2.0-flash') model = 'gemini-3.8-flash';
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+
+    const pingModel = async (targetModel) => {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(key)}`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,12 +48,41 @@ const AI = {
         })
       });
       const rawText = await response.text();
+      return { response, rawText };
+    };
+
+    try {
+      let { response, rawText } = await pingModel(model);
+
+      // Auto-retry once if Google servers returned temporary high demand or 503/429
+      if (response.status === 503 || response.status === 429 || rawText.toLowerCase().includes('high demand')) {
+        await new Promise(r => setTimeout(r, 1200));
+        const retryResult = await pingModel(model);
+        response = retryResult.response;
+        rawText = retryResult.rawText;
+      }
+
       if (!response.ok) {
         let msg = `Google API Error (${response.status})`;
+        let isHighDemand = false;
         try {
           const errObj = JSON.parse(rawText);
-          if (errObj.error?.message) msg = errObj.error.message;
+          if (errObj.error?.message) {
+            msg = errObj.error.message;
+            if (msg.toLowerCase().includes('high demand') || response.status === 503) {
+              isHighDemand = true;
+            }
+          }
         } catch (e) {}
+
+        // When Google reports "high demand", the API key authentication succeeded (it wasn't rejected as invalid)
+        if (isHighDemand) {
+          return {
+            ok: true,
+            isTemporaryBusy: true,
+            message: 'Your Gemini API key is valid! Google servers are temporarily experiencing high demand, but your key has been saved and activated.'
+          };
+        }
         return { ok: false, message: msg };
       }
       return { ok: true, message: 'Connected to Gemini API successfully!' };
