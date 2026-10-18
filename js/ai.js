@@ -7,7 +7,8 @@
 const AI = {
   // Check available AI engines
   async getCapabilities() {
-    const geminiKey = (typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('geminiApiKey') : '';
+    const rawKey = (typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('geminiApiKey') : '';
+    const geminiKey = (rawKey || '').trim().replace(/^["']|["']$/g, '');
     let hasChromeAi = false;
     try {
       if (typeof window !== 'undefined' && (window.ai?.languageModel || window.ai?.assistant)) {
@@ -17,11 +18,46 @@ const AI = {
       hasChromeAi = false;
     }
 
+    // Google API keys are at least 25 characters and start with AIza
+    const isValidKeyFormat = Boolean(geminiKey && geminiKey.length >= 25 && geminiKey.startsWith('AIza'));
+
     return {
-      hasGeminiKey: Boolean(geminiKey && geminiKey.trim().length > 10),
+      hasGeminiKey: isValidKeyFormat,
+      apiKey: geminiKey,
       hasChromeAi: hasChromeAi,
-      activeEngine: (geminiKey && geminiKey.trim().length > 10) ? 'gemini' : (hasChromeAi ? 'chrome' : 'offline')
+      activeEngine: isValidKeyFormat ? 'gemini' : (hasChromeAi ? 'chrome' : 'offline')
     };
+  },
+
+  async testApiKey(apiKey) {
+    const key = (apiKey || '').trim().replace(/^["']|["']$/g, '');
+    if (!key) {
+      return { ok: false, message: 'No API key entered. WorkshopHub will run in 100% private offline mode.' };
+    }
+    const model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-2.0-flash';
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: 'Ping' }] }],
+          generationConfig: { maxOutputTokens: 5 }
+        })
+      });
+      const rawText = await response.text();
+      if (!response.ok) {
+        let msg = `Google API Error (${response.status})`;
+        try {
+          const errObj = JSON.parse(rawText);
+          if (errObj.error?.message) msg = errObj.error.message;
+        } catch (e) {}
+        return { ok: false, message: msg };
+      }
+      return { ok: true, message: 'Connected to Gemini API successfully!' };
+    } catch (e) {
+      return { ok: false, message: e.message || 'Network request failed' };
+    }
   },
 
   // 1. Multimodal or Text Extraction with Gemini / Chrome AI / Local OCR / Cloud OCR

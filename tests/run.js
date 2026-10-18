@@ -208,5 +208,11 @@ test('AI.offlineScheduleSearch handles empty schedules gracefully', () => {
   assert.ok(reply.includes("don't have any registered workshops"));
 });
 
+test('AI.testApiKey reports empty key gracefully', async () => {
+  const res = await AI.testApiKey('');
+  assert.strictEqual(res.ok, false);
+  assert.ok(res.message.includes('No API key'));
+});
+
 console.log(`\nResults: ${passed} passed, ${failed} failed.`);
 if (failed > 0) process.exit(1);

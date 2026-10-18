@@ -236,6 +236,58 @@ document.addEventListener('DOMContentLoaded', () => {
     UI.refresh();
   });
 
+  // Test Gemini Key in Settings
+  document.getElementById('test-gemini-key-btn')?.addEventListener('click', async () => {
+    const input = document.getElementById('settings-api-key');
+    const statusEl = document.getElementById('settings-key-status');
+    const testBtn = document.getElementById('test-gemini-key-btn');
+    if (!statusEl || !input) return;
+
+    const key = input.value.trim();
+    if (!key) {
+      statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+      statusEl.textContent = 'ℹ️ No key entered. WorkshopHub is running in 100% private offline mode.';
+      statusEl.classList.remove('hidden');
+      return;
+    }
+
+    const originalText = testBtn.textContent;
+    testBtn.textContent = 'Testing...';
+    testBtn.disabled = true;
+
+    try {
+      const res = await AI.testApiKey(key);
+      if (res.ok) {
+        statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+        statusEl.textContent = '✅ ' + res.message;
+      } else {
+        statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800';
+        statusEl.textContent = '❌ Google API returned: ' + res.message;
+      }
+    } catch (e) {
+      statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-red-50 text-red-700 border border-red-200';
+      statusEl.textContent = '❌ ' + e.message;
+    } finally {
+      statusEl.classList.remove('hidden');
+      testBtn.textContent = originalText;
+      testBtn.disabled = false;
+    }
+  });
+
+  // Clear Gemini Key in Settings
+  document.getElementById('clear-gemini-key-btn')?.addEventListener('click', () => {
+    const input = document.getElementById('settings-api-key');
+    const statusEl = document.getElementById('settings-key-status');
+    if (input) input.value = '';
+    if (statusEl) {
+      statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+      statusEl.textContent = '✨ Key cleared. Switched to offline schedule mode.';
+      statusEl.classList.remove('hidden');
+    }
+    Store.setSetting('geminiApiKey', '');
+    UI.showToast('Switched to offline schedule mode.');
+  });
+
   // Google Drive Personal Sync Controls
   document.getElementById('settings-drive-connect-btn')?.addEventListener('click', () => {
     const inputId = document.getElementById('settings-gdrive-client-id')?.value.trim();

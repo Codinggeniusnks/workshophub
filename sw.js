@@ -3,7 +3,7 @@
  * Enables offline caching, offline app launches, and PWA installation.
  */
 
-const CACHE_NAME = 'workshophub-cache-v8';
+const CACHE_NAME = 'workshophub-cache-v9';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -106,21 +106,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for local app assets
+  // App assets (JS, CSS, JSON): NETWORK-FIRST with cache fallback
+  // Guarantees all devices (PC & Phone) immediately run fresh code updates without stale cache
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch in background to update cache
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-            });
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+            return caches.match('./index.html').then((doc) => doc || caches.match('./'));
           }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+          return null;
+        });
+      })
   );
 });
