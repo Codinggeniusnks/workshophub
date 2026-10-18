@@ -259,7 +259,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await AI.testApiKey(key);
       if (res.ok) {
         statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
-        statusEl.textContent = '✅ ' + res.message;
+        statusEl.textContent = '✅ ' + res.message + ' (Auto-saved & Activated!)';
+        Store.saveSettings({
+          geminiApiKey: key,
+          aiModel: 'gemini-3.8-flash'
+        });
+        UI.refresh();
       } else {
         statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800';
         statusEl.textContent = '❌ Google API returned: ' + res.message;

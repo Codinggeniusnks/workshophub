@@ -214,5 +214,54 @@ test('AI.testApiKey reports empty key gracefully', async () => {
   assert.ok(res.message.includes('No API key'));
 });
 
+test('AI.offlineScheduleSearch directly answers "Give me the Zoom/Google Meet link and passcode for my next session"', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const events = [
+    {
+      id: 'e1',
+      title: 'Internship Briefing',
+      date: today,
+      startTime: '16:00',
+      mode: 'online',
+      meetingLink: '',
+      passcode: ''
+    },
+    {
+      id: 'e2',
+      title: 'Figma Workshop',
+      date: '2026-11-01',
+      startTime: '10:00',
+      mode: 'in-person',
+      venue: 'The Gardens Mall'
+    }
+  ];
+  const reply = AI.offlineScheduleSearch('Give me the Zoom/Google Meet link and passcode for my next session.', events);
+  // Must focus on the next session ONLY
+  assert.ok(reply.includes('Internship Briefing'));
+  assert.ok(reply.includes('Online'));
+  assert.ok(reply.includes('No meeting link or passcode has been saved'));
+  // Must NOT dump unrelated events
+  assert.strictEqual(reply.includes('The Gardens Mall'), false);
+});
+
+test('AI.offlineScheduleSearch provides link and passcode when present for next session', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const events = [
+    {
+      id: 'e1',
+      title: 'Kubernetes Hands-on',
+      date: today,
+      startTime: '14:00',
+      mode: 'online',
+      meetingLink: 'https://meet.google.com/k8s-demo',
+      passcode: '9988'
+    }
+  ];
+  const reply = AI.offlineScheduleSearch('What is the link and passcode for my next session?', events);
+  assert.ok(reply.includes('Kubernetes Hands-on'));
+  assert.ok(reply.includes('https://meet.google.com/k8s-demo'));
+  assert.ok(reply.includes('9988'));
+});
+
 console.log(`\nResults: ${passed} passed, ${failed} failed.`);
 if (failed > 0) process.exit(1);

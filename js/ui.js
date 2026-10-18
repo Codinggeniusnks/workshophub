@@ -360,17 +360,25 @@ const UI = {
 
   // 8. "Ask AI" Chat View
   renderAiChatView(container) {
+    const rawKey = Store.getSetting('geminiApiKey');
+    const isGemini = Boolean(rawKey && rawKey.trim().length >= 20 && rawKey.trim().startsWith('AIza'));
+
     container.innerHTML = `
       <div class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[560px]">
         <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5">
             <span class="text-xl">🤖</span>
             <div>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Workshop Assistant</h3>
-              <p class="text-[11px] text-slate-500">Ask anything about your registered programmes & workshops</p>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Workshop Assistant</h3>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${isGemini ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}">
+                  ${isGemini ? '● Gemini 3.8 Flash' : '● Offline Mode'}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500">${isGemini ? 'Connected to Google Gemini 3.8 Flash' : 'Running on built-in offline schedule engine'}</p>
             </div>
           </div>
-          <button data-action="open-settings" class="text-xs text-indigo-600 font-semibold hover:underline">
+          <button data-action="open-settings" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
             AI Settings ⚙️
           </button>
         </div>

@@ -351,6 +351,18 @@ Provide a clear, friendly, and concise response answering their question accurat
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
+    // Chronologically sorted events
+    const sortedEvents = events.slice().sort((a, b) => {
+      const dtA = (a.date || '') + 'T' + (a.startTime || '00:00');
+      const dtB = (b.date || '') + 'T' + (b.startTime || '00:00');
+      return dtA.localeCompare(dtB);
+    });
+    const upcomingEvents = sortedEvents.filter(e => e.date >= todayStr);
+    const activePool = upcomingEvents.length > 0 ? upcomingEvents : sortedEvents;
+
+    // Detect if user asks specifically about "next session", "next workshop", "upcoming event"
+    const isNextOnly = ['next session', 'next workshop', 'next event', 'next programme', 'my next', 'next upcoming', 'first upcoming'].some(k => q.includes(k));
+
     // Helper: calculate start and end of current week (Monday to Sunday)
     const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday...
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -397,23 +409,48 @@ Provide a clear, friendly, and concise response answering their question accurat
       }
     }
 
-    // 2. Preparation, Checklist, Tools, Materials queries
-    const isPrepQuery = ['prep', 'tool', 'checklist', 'material', 'bring', 'equipment', 'require', 'link', 'passcode'].some(k => q.includes(k));
+    // 2. Links, Passcode & Online Joining queries
+    const isLinkQuery = ['link', 'passcode', 'password', 'zoom', 'meet', 'teams', 'join', 'how to join', 'url'].some(k => q.includes(k));
+    if (isLinkQuery) {
+      const targetList = isNextOnly ? [activePool[0]] : activePool.slice(0, 5);
+      let out = isNextOnly ? `🔗 **Online Joining Details for Your Next Session:**\n\n` : `🔗 **Meeting Links & Access Details for Upcoming Sessions:**\n\n`;
+
+      targetList.forEach(ev => {
+        const timeStr = ev.startTime ? (ev.endTime ? `${ev.startTime} - ${ev.endTime}` : ev.startTime) : 'Time TBD';
+        out += `• **${ev.title}** (${ev.date} at ${timeStr})\n`;
+        if (ev.mode === 'online') {
+          if (ev.meetingLink) {
+            out += `  🔗 **Meeting Link:** ${ev.meetingLink}\n`;
+            out += `  🔑 **Passcode:** ${ev.passcode || 'None required'}\n`;
+            out += `  💻 **Platform:** ${ev.venue || 'Google Meet / Zoom'}\n`;
+          } else {
+            out += `  📍 **Format:** Online\n`;
+            out += `  ⚠️ **No meeting link or passcode has been saved for this workshop yet.**\n`;
+            out += `  💡 *Tip: Check your confirmation email from the organizer, or click "Edit" on this workshop card to paste the Zoom/Google Meet link!*\n`;
+          }
+        } else {
+          out += `  🏢 **Format:** In-Person (This is not held online)\n`;
+          out += `  📍 **Physical Venue:** ${ev.venue || 'Hall / Address TBD'}\n`;
+        }
+        out += `\n`;
+      });
+      return out.trim();
+    }
+
+    // 3. Preparation, Checklist, Tools, Materials queries
+    const isPrepQuery = ['prep', 'tool', 'checklist', 'material', 'bring', 'equipment', 'require', 'prerequisite'].some(k => q.includes(k));
     if (isPrepQuery) {
-      // Find upcoming events or all events
-      const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
-      const targetEvents = upcoming.length > 0 ? upcoming : events;
+      const targetList = isNextOnly ? [activePool[0]] : activePool.slice(0, 5);
+      let prepMsg = isNextOnly ? `📋 **Preparation & Tools for Your Next Session:**\n\n` : `📋 **Preparation & Tools for Upcoming Sessions:**\n\n`;
 
-      let prepMsg = `📋 **Preparation & Tools for Upcoming Sessions:**\n\n`;
-      let detailsFound = 0;
-
-      targetEvents.slice(0, 5).forEach(e => {
+      targetList.forEach(e => {
         prepMsg += `• **${e.title}** (${e.date} at ${e.startTime || 'TBD'})\n`;
-        prepMsg += `  📍 Mode: ${e.mode === 'online' ? 'Online' : (e.venue || 'In-person')}\n`;
+        prepMsg += `  📍 Location: ${e.mode === 'online' ? 'Online' : (e.venue || 'In-person')}\n`;
 
         let hasItem = false;
-        if (e.meetingLink) {
-          prepMsg += `  🔗 Link: ${e.meetingLink}${e.passcode ? ` (Passcode: ${e.passcode})` : ''}\n`;
+        if (e.mode === 'online' && e.meetingLink) {
+          prepMsg += `  🔗 Join Link: ${e.meetingLink}\n`;
+          if (e.passcode) prepMsg += `  🔑 Passcode: ${e.passcode}\n`;
           hasItem = true;
         }
         if (Array.isArray(e.checklist) && e.checklist.length > 0) {
@@ -422,7 +459,7 @@ Provide a clear, friendly, and concise response answering their question accurat
           hasItem = true;
         }
         if (e.materialsLink) {
-          prepMsg += `  📁 Materials: ${e.materialsLink}\n`;
+          prepMsg += `  📁 Materials / Slides: ${e.materialsLink}\n`;
           hasItem = true;
         }
         if (e.notes) {
@@ -431,8 +468,6 @@ Provide a clear, friendly, and concise response answering their question accurat
         }
         if (!hasItem) {
           prepMsg += `  ℹ️ No special equipment or notes recorded yet. Keep your confirmation email handy!\n`;
-        } else {
-          detailsFound++;
         }
         prepMsg += `\n`;
       });
@@ -440,7 +475,30 @@ Provide a clear, friendly, and concise response answering their question accurat
       return prepMsg.trim();
     }
 
-    // 3. Time-scoped queries: "this week"
+    // 4. Physical Venue & Travel queries
+    const isVenueQuery = ['where', 'location', 'venue', 'travel', 'address', 'hall', 'room', 'in-person'].some(k => q.includes(k));
+    if (isVenueQuery) {
+      const targetList = isNextOnly ? [activePool[0]] : activePool.slice(0, 5);
+      let out = isNextOnly ? `📍 **Location Details for Your Next Session:**\n\n` : `📍 **Venue & Location Details:**\n\n`;
+      targetList.forEach(e => {
+        out += `• **${e.title}** (${e.date} at ${e.startTime || 'TBD'})\n`;
+        if (e.mode === 'online') {
+          out += `  🌐 Online event: ${e.meetingLink ? e.meetingLink : 'Meeting link pending'}\n`;
+        } else {
+          out += `  🏢 Physical Venue: **${e.venue || 'Address TBD'}** (Requires travel)\n`;
+        }
+        out += `\n`;
+      });
+      return out.trim();
+    }
+
+    // 5. "next session" / "my next" standalone query
+    if (isNextOnly) {
+      const nextEvent = activePool[0];
+      return `📅 **Your Next Upcoming Session:**\n\n${formatEvent(nextEvent)}`;
+    }
+
+    // 6. Time-scoped queries: "this week"
     if (q.includes('this week') || q.includes('week')) {
       const thisWeekEvents = events.filter(e => e.date >= mondayStr && e.date <= sundayStr)
         .sort((a, b) => a.date.localeCompare(b.date));
@@ -456,7 +514,7 @@ Provide a clear, friendly, and concise response answering their question accurat
         thisWeekEvents.map(formatEvent).join('\n\n');
     }
 
-    // 4. "today"
+    // 7. "today"
     if (q.includes('today')) {
       const todayEvents = events.filter(e => e.date === todayStr);
       if (todayEvents.length === 0) {
@@ -466,7 +524,7 @@ Provide a clear, friendly, and concise response answering their question accurat
         todayEvents.map(formatEvent).join('\n\n');
     }
 
-    // 5. "tomorrow"
+    // 8. "tomorrow"
     if (q.includes('tomorrow')) {
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
@@ -479,16 +537,14 @@ Provide a clear, friendly, and concise response answering their question accurat
         tomorrowEvents.map(formatEvent).join('\n\n');
     }
 
-    // 6. "upcoming", "next", "what workshop", "sessions", "schedule", "all"
-    if (q.includes('upcoming') || q.includes('next') || q.includes('what workshop') || q.includes('sessions') || q.includes('schedule') || q.includes('all')) {
-      const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
-      const targetList = upcoming.length > 0 ? upcoming : events;
+    // 9. "upcoming", "what workshop", "sessions", "schedule", "all"
+    if (q.includes('upcoming') || q.includes('what workshop') || q.includes('sessions') || q.includes('schedule') || q.includes('all')) {
       return `📅 **Your Registered Programme Schedule:**\n\n` +
-        targetList.slice(0, 7).map(formatEvent).join('\n\n') +
-        (targetList.length > 7 ? `\n\n... and ${targetList.length - 7} more session(s).` : '');
+        activePool.slice(0, 7).map(formatEvent).join('\n\n') +
+        (activePool.length > 7 ? `\n\n... and ${activePool.length - 7} more session(s).` : '');
     }
 
-    // 7. Keyword matching (filtering stopwords)
+    // 10. Keyword matching
     const stopWords = new Set(['what', 'which', 'when', 'where', 'how', 'give', 'me', 'the', 'a', 'an', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'is', 'are', 'my', 'do', 'i', 'have', 'any']);
     const tokens = q.split(/\s+/).map(t => t.replace(/[^a-z0-9]/g, '')).filter(t => t.length > 2 && !stopWords.has(t));
 
@@ -502,11 +558,7 @@ Provide a clear, friendly, and concise response answering their question accurat
         matches.map(formatEvent).join('\n\n');
     }
 
-    // Fallback: list upcoming events
-    const upcoming = events.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
-    return `I couldn't find a direct match for "${query}".\n\nHere are your upcoming sessions:\n\n` +
-      (upcoming.length > 0 ? upcoming.slice(0, 5).map(formatEvent).join('\n\n') : events.slice(0, 5).map(formatEvent).join('\n\n')) +
-      `\n\n💡 Tip: You can configure your free Gemini API key in Settings for full conversational AI!`;
+    return `I couldn't find a direct match for "${query}".\n\nHere is your next upcoming session:\n\n${formatEvent(activePool[0])}`;
   },
 
   sanitizeExtractedEvent(data) {
