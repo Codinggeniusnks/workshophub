@@ -48,19 +48,29 @@ const Store = {
     if (key === 'aiModel' && (val === 'gemini-2.0-flash' || !val)) {
       val = 'gemini-3.8-flash';
     }
+    if (key === 'geminiApiKey' && typeof val === 'string') {
+      val = val.trim().replace(/^["']|["']$/g, '').trim();
+    }
     return val;
   },
 
   saveSettings(newSettings) {
     const current = this.getSettings();
     const updated = { ...current, ...newSettings };
+    if (typeof updated.geminiApiKey === 'string') {
+      updated.geminiApiKey = updated.geminiApiKey.trim().replace(/^["']|["']$/g, '').trim();
+    }
     localStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(updated));
     return updated;
   },
 
   setSetting(key, value) {
     const settings = this.getSettings();
-    settings[key] = value;
+    let cleanVal = value;
+    if (key === 'geminiApiKey' && typeof value === 'string') {
+      cleanVal = value.trim().replace(/^["']|["']$/g, '').trim();
+    }
+    settings[key] = cleanVal;
     localStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(settings));
   },
 

@@ -18,8 +18,8 @@ const AI = {
       hasChromeAi = false;
     }
 
-    // Google API keys are at least 25 characters and start with AIza
-    const isValidKeyFormat = Boolean(geminiKey && geminiKey.length >= 25 && geminiKey.startsWith('AIza'));
+    // Any saved key with at least 10 characters is active
+    const isValidKeyFormat = Boolean(geminiKey && geminiKey.length >= 10);
 
     return {
       hasGeminiKey: isValidKeyFormat,

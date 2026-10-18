@@ -9,6 +9,18 @@ const Parser = require('../js/parser.js');
 const Organiser = require('../js/organiser.js');
 const Calendar = require('../js/calendar.js');
 const DriveSync = require('../js/driveSync.js');
+if (typeof localStorage === 'undefined') {
+  const storeMap = new Map();
+  global.localStorage = {
+    getItem: (k) => storeMap.get(k) || null,
+    setItem: (k, v) => storeMap.set(k, String(v)),
+    removeItem: (k) => storeMap.delete(k),
+    clear: () => storeMap.clear()
+  };
+}
+
+const Store = require('../js/store.js');
+global.Store = Store;
 const AI = require('../js/ai.js');
 
 let passed = 0;
@@ -263,5 +275,23 @@ test('AI.offlineScheduleSearch provides link and passcode when present for next 
   assert.ok(reply.includes('9988'));
 });
 
+test('Store sanitizes geminiApiKey and AI.getCapabilities detects key properly', async () => {
+  Store.saveSettings({ geminiApiKey: '  "AIzaSyDemoKey123456789"  ' });
+  const storedKey = Store.getSetting('geminiApiKey');
+  assert.strictEqual(storedKey, 'AIzaSyDemoKey123456789');
+
+  const caps = await AI.getCapabilities();
+  assert.strictEqual(caps.hasGeminiKey, true);
+  assert.strictEqual(caps.activeEngine, 'gemini');
+  assert.strictEqual(caps.apiKey, 'AIzaSyDemoKey123456789');
+
+  // Clear key
+  Store.setSetting('geminiApiKey', '');
+  const clearedCaps = await AI.getCapabilities();
+  assert.strictEqual(clearedCaps.hasGeminiKey, false);
+  assert.strictEqual(clearedCaps.activeEngine, 'offline');
+});
+
 console.log(`\nResults: ${passed} passed, ${failed} failed.`);
 if (failed > 0) process.exit(1);
+

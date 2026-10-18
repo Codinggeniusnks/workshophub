@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Settings Save & Actions
   document.getElementById('settings-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const apiKey = document.getElementById('settings-api-key').value.trim();
+    const apiKey = document.getElementById('settings-api-key').value.trim().replace(/^["']|["']$/g, '').trim();
     const model = document.getElementById('settings-model').value;
     const tz = document.getElementById('settings-timezone').value;
     const gdriveClientId = document.getElementById('settings-gdrive-client-id')?.value.trim();
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const testBtn = document.getElementById('test-gemini-key-btn');
     if (!statusEl || !input) return;
 
-    const key = input.value.trim();
+    const key = input.value.trim().replace(/^["']|["']$/g, '').trim();
     if (!key) {
       statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
       statusEl.textContent = 'ℹ️ No key entered. WorkshopHub is running in 100% private offline mode.';
@@ -265,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
           statusEl.className = 'mt-1.5 text-[11px] font-medium p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
           statusEl.textContent = '✅ ' + res.message + ' (Auto-saved & Activated!)';
         }
+        input.value = key;
         Store.saveSettings({
           geminiApiKey: key,
           aiModel: 'gemini-3.8-flash'
