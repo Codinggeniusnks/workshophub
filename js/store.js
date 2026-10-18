@@ -12,7 +12,7 @@ const Store = {
 
   DEFAULT_SETTINGS: {
     geminiApiKey: '',
-    aiModel: 'gemini-2.0-flash',
+    aiModel: 'gemini-3.8-flash',
     preferOnDeviceAi: true,
     darkMode: false,
     notificationsEnabled: false,
@@ -30,7 +30,13 @@ const Store = {
     try {
       const raw = localStorage.getItem(this.KEYS.SETTINGS);
       if (!raw) return { ...this.DEFAULT_SETTINGS };
-      return { ...this.DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      const parsed = { ...this.DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      // Auto-migrate retired gemini-2.0-flash
+      if (parsed.aiModel === 'gemini-2.0-flash' || !parsed.aiModel) {
+        parsed.aiModel = 'gemini-3.8-flash';
+        try { localStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(parsed)); } catch (e) {}
+      }
+      return parsed;
     } catch (e) {
       return { ...this.DEFAULT_SETTINGS };
     }
@@ -38,7 +44,11 @@ const Store = {
 
   getSetting(key) {
     const settings = this.getSettings();
-    return settings[key] !== undefined ? settings[key] : this.DEFAULT_SETTINGS[key];
+    let val = settings[key] !== undefined ? settings[key] : this.DEFAULT_SETTINGS[key];
+    if (key === 'aiModel' && (val === 'gemini-2.0-flash' || !val)) {
+      val = 'gemini-3.8-flash';
+    }
+    return val;
   },
 
   saveSettings(newSettings) {

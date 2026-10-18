@@ -670,7 +670,7 @@ const UI = {
     if (!modal) return;
 
     document.getElementById('settings-api-key').value = Store.getSetting('geminiApiKey') || '';
-    document.getElementById('settings-model').value = Store.getSetting('aiModel') || 'gemini-2.0-flash';
+    document.getElementById('settings-model').value = Store.getSetting('aiModel') || 'gemini-3.8-flash';
     document.getElementById('settings-timezone').value = Store.getSetting('userTimezone') || 'UTC';
 
     // Google Drive Sync fields

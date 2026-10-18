@@ -231,7 +231,7 @@ const DriveSync = {
         if (!localApiKey && data.settings.geminiApiKey) {
           Store.saveSettings({
             geminiApiKey: data.settings.geminiApiKey,
-            aiModel: data.settings.aiModel || 'gemini-2.0-flash',
+            aiModel: (data.settings.aiModel === 'gemini-2.0-flash' ? 'gemini-3.8-flash' : (data.settings.aiModel || 'gemini-3.8-flash')),
             userTimezone: data.settings.userTimezone || 'UTC'
           });
           console.log('Restored Gemini settings from Google Drive cloud sync.');
@@ -265,7 +265,7 @@ const DriveSync = {
       events: events,
       settings: {
         geminiApiKey: localApiKey || '',
-        aiModel: localModel || 'gemini-2.0-flash',
+        aiModel: (localModel === 'gemini-2.0-flash' ? 'gemini-3.8-flash' : (localModel || 'gemini-3.8-flash')),
         userTimezone: localTz || 'UTC'
       }
     }, null, 2);
@@ -301,7 +301,7 @@ const DriveSync = {
       events: events,
       settings: {
         geminiApiKey: localApiKey || '',
-        aiModel: localModel || 'gemini-2.0-flash',
+        aiModel: (localModel === 'gemini-2.0-flash' ? 'gemini-3.8-flash' : (localModel || 'gemini-3.8-flash')),
         userTimezone: localTz || 'UTC'
       }
     }, null, 2);

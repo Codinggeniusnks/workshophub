@@ -34,7 +34,8 @@ const AI = {
     if (!key) {
       return { ok: false, message: 'No API key entered. WorkshopHub will run in 100% private offline mode.' };
     }
-    const model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-2.0-flash';
+    let model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-3.8-flash';
+    if (model === 'gemini-2.0-flash') model = 'gemini-3.8-flash';
     try {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
       const response = await fetch(endpoint, {
@@ -157,7 +158,8 @@ const AI = {
 
   async extractWithGemini({ text, imageBase64, mimeType }) {
     const apiKey = Store.getSetting('geminiApiKey');
-    const model = Store.getSetting('aiModel') || 'gemini-2.0-flash';
+    let model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-3.8-flash';
+    if (model === 'gemini-2.0-flash') model = 'gemini-3.8-flash';
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     const userTz = Store.getSetting('userTimezone') || 'UTC';
@@ -267,7 +269,8 @@ Extract structured workshop/programme details. Return ONLY valid JSON adhering s
 
     if (caps.hasGeminiKey) {
       try {
-        const model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-2.0-flash';
+        let model = ((typeof Store !== 'undefined' && Store.getSetting) ? Store.getSetting('aiModel') : null) || 'gemini-3.8-flash';
+        if (model === 'gemini-2.0-flash') model = 'gemini-3.8-flash';
 
         // Prepare a compact, sanitized view of the user's events
         const sanitizedSchedule = (events || []).map(e => ({
